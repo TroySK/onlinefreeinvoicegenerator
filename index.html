@@ -115,6 +115,28 @@
             gap: 20px;
             flex-wrap: wrap;
         }
+        
+        @media (max-width: 768px) {
+            .template-options {
+                justify-content: center;
+            }
+            
+            .template-option svg {
+                width: 80px;
+                height: 112px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .template-options {
+                gap: 10px;
+            }
+            
+            .template-option svg {
+                width: 70px;
+                height: 98px;
+            }
+        }
 
         .template-option {
             text-align: center;
@@ -257,6 +279,12 @@
             flex: 1;
             min-width: 200px;
         }
+        
+        @media (max-width: 768px) {
+            .invoice-meta-group {
+                min-width: 100%;
+            }
+        }
 
         .invoice-meta div {
             margin-bottom: 15px;
@@ -386,6 +414,82 @@
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
 
+        /* Responsive table */
+        @media screen and (max-width: 768px) {
+            .line-items, .line-items thead, .line-items tbody, .line-items th, .line-items td, .line-items tr {
+                display: block;
+            }
+
+            .line-items thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            .line-items tr {
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                margin-bottom: 15px;
+                padding: 10px;
+                background-color: #f9fafb;
+            }
+
+            .line-items td {
+                border: none;
+                position: relative;
+                padding: 8px 8px 8px 40%;
+                text-align: right;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .line-items td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                width: 35%;
+                text-align: left;
+                font-weight: 600;
+                color: #4b5563;
+            }
+
+            .line-items td:last-child {
+                border-bottom: none;
+            }
+
+            .line-items .item-amount {
+                font-weight: 600;
+                color: #1f2937;
+            }
+
+            .line-items .tax-cell {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+            }
+
+            .line-items .tax-amount {
+                text-align: right;
+                margin-top: 5px;
+            }
+            
+            /* Improve input sizing on mobile */
+            .line-items input, .line-items textarea {
+                font-size: 16px; /* Prevents zoom on iOS */
+                max-width: 100%;
+            }
+            
+            .line-items textarea {
+                min-height: 60px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            #add-item-btn {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+        }
+
         .line-items input {
             width: 100%;
             padding: 8px 10px;
@@ -463,6 +567,13 @@
             border-top: 1px solid var(--border-color);
             max-width: 300px;
             margin-left: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .totals {
+                max-width: 100%;
+                margin-left: 0;
+            }
         }
 
         .totals-row {
@@ -633,6 +744,23 @@
                 padding: 30px;
             }
         }
+        
+        @media (max-width: 768px) {
+            .app-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .template-selector {
+                order: 2;
+            }
+            
+            #download-btn {
+                order: 1;
+                align-self: stretch;
+                margin-bottom: 20px;
+            }
+        }
     </style>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-0JC8ZK7W10"></script>
@@ -766,14 +894,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td><textarea class="item-description" placeholder="Item description"></textarea></td>
-                        <td><input type="number" class="item-quantity" placeholder="0" min="0" step="1"></td>
-                        <td><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01"></td>
-                        <td class="tax-cell">
+                        <td data-label="Description"><textarea class="item-description" placeholder="Item description"></textarea></td>
+                        <td data-label="Quantity"><input type="number" class="item-quantity" placeholder="0" min="0" step="1"></td>
+                        <td data-label="Rate"><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01"></td>
+                        <td data-label="Tax (%)" class="tax-cell">
                             <input type="number" class="item-tax" placeholder="0" min="0" max="100" step="0.1">
                             <div class="tax-amount" id="tax-amount-0"></div>
                         </td>
-                        <td class="item-amount">0.00</td>
+                        <td data-label="Amount" class="item-amount">0.00</td>
                     </tr>
                 </tbody>
             </table>
@@ -1378,14 +1506,14 @@
             const index = invoiceData.lineItems.length;
             
             newRow.innerHTML = `
-                <td><textarea class="item-description" placeholder="Item description"></textarea></td>
-                <td><input type="number" class="item-quantity" placeholder="0" min="0" step="1"></td>
-                <td><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01"></td>
-                <td class="tax-cell">
+                <td data-label="Description"><textarea class="item-description" placeholder="Item description"></textarea></td>
+                <td data-label="Quantity"><input type="number" class="item-quantity" placeholder="0" min="0" step="1"></td>
+                <td data-label="Rate"><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01"></td>
+                <td data-label="Tax (%)" class="tax-cell">
                     <input type="number" class="item-tax" placeholder="0" min="0" max="100" step="0.1">
                     <div class="tax-amount" id="tax-amount-${index}"></div>
                 </td>
-                <td class="item-amount">0.00</td>
+                <td data-label="Amount" class="item-amount">0.00</td>
             `;
             
             // Add event listeners to the new row
@@ -1590,6 +1718,9 @@
                 // Calculate the starting Y position for the table
                 const tableStartY = Math.max(110, 100 + Math.max(senderAddressHeight, recipientAddressHeight) + 10);
                 
+                // Add some extra spacing before the table
+                const adjustedTableStartY = tableStartY + 10;
+                
                 // Add line items table with template-specific styling
                 const headers = [["Description", "Quantity", "Rate", "Tax %", "Amount"]];
                 // Use currency symbol if available, otherwise use currency code
@@ -1605,7 +1736,7 @@
                 doc.autoTable({
                     head: headers,
                     body: rows,
-                    startY: tableStartY,
+                    startY: adjustedTableStartY,
                     theme: 'grid',
                     headStyles: {
                         fillColor: headerColor,
@@ -1618,37 +1749,41 @@
                 });
                 
                 // Add totals with template-specific styling
-                const finalY = doc.lastAutoTable.finalY || tableStartY + 40;
+                const finalY = doc.lastAutoTable.finalY || adjustedTableStartY + 40;
                 doc.setTextColor(0, 0, 0);
                 doc.setFontSize(12);
                 
                 // Left align labels, right align numbers
                 const labelX = 140;
                 const valueX = 190;
+                const lineHeight = 10;
                 // Use currency symbol if available, otherwise use currency code
                 // currencyDisplay is already declared above in the line items section
                 
-                doc.text('Subtotal:', labelX, finalY + 10);
+                doc.text('Subtotal:', labelX, finalY + lineHeight);
                 const subtotalText = `${currencyDisplay}${invoiceData.subtotal.toFixed(2)}`;
                 const subtotalWidth = doc.getTextWidth(subtotalText);
-                doc.text(subtotalText, valueX - subtotalWidth, finalY + 10);
+                doc.text(subtotalText, valueX - subtotalWidth, finalY + lineHeight);
                 
-                doc.text('Total Tax:', labelX, finalY + 20);
+                doc.text('Total Tax:', labelX, finalY + (lineHeight * 2));
                 const taxText = `${currencyDisplay}${invoiceData.totalTax.toFixed(2)}`;
                 const taxWidth = doc.getTextWidth(taxText);
-                doc.text(taxText, valueX - taxWidth, finalY + 20);
+                doc.text(taxText, valueX - taxWidth, finalY + (lineHeight * 2));
                 
-                doc.text('Discount:', labelX, finalY + 30);
+                doc.text('Discount:', labelX, finalY + (lineHeight * 3));
                 const discountText = `-${currencyDisplay}${invoiceData.discount.toFixed(2)}`;
                 const discountWidth = doc.getTextWidth(discountText);
-                doc.text(discountText, valueX - discountWidth, finalY + 30);
+                doc.text(discountText, valueX - discountWidth, finalY + (lineHeight * 3));
                 
                 doc.setFontSize(14);
                 doc.setTextColor(...headerColor);
-                doc.text('Grand Total:', labelX, finalY + 40);
+                doc.text('Grand Total:', labelX, finalY + (lineHeight * 4));
                 const grandTotalText = `${currencyDisplay}${invoiceData.grandTotal.toFixed(2)}`;
                 const grandTotalWidth = doc.getTextWidth(grandTotalText);
-                doc.text(grandTotalText, valueX - grandTotalWidth, finalY + 40);
+                doc.text(grandTotalText, valueX - grandTotalWidth, finalY + (lineHeight * 4));
+                
+                // Add some extra space after totals
+                const contentEndY = finalY + (lineHeight * 5);
                 
                 // Save the PDF
                 doc.save(`invoice-${invoiceData.invoiceNumber}.pdf`);
