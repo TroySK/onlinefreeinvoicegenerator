@@ -883,7 +883,6 @@
                         <div>
                             <label for="tax-detail">Tax Detail</label>
                             <input type="text" id="tax-detail" placeholder="Eg. VAT ID - 1234, GST - 5678">
-                            <div class="error" id="tax-detail-error"></div>
                         </div>
                     </div>
                 </div>
@@ -997,6 +996,7 @@
             invoiceNumber: "INV-0001",
             date: new Date().toISOString().split('T')[0],
             currency: "USD",
+            taxDetail: "",
             sender: {
                 name: "",
                 address: "",
