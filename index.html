@@ -879,6 +879,13 @@
                             </select>
                         </div>
                     </div>
+                    <div class="invoice-meta-group">
+                        <div>
+                            <label for="tax-detail">Tax Detail</label>
+                            <input type="text" id="tax-detail" placeholder="Eg. VAT ID - 1234, GST - 5678">
+                            <div class="error" id="tax-detail-error"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1224,6 +1231,10 @@
             document.getElementById('discount').addEventListener('input', (e) => {
                 invoiceData.discount = parseFloat(e.target.value) || 0;
                 calculateTotals();
+            });
+            
+            document.getElementById('tax-detail').addEventListener('input', (e) => {
+                invoiceData.taxDetail = e.target.value;
             });
             
             document.getElementById('add-item-btn').addEventListener('click', addItem);
@@ -1688,6 +1699,10 @@
                 const dateText = `Date: ${invoiceData.date}`;
                 const dateWidth = doc.getTextWidth(dateText);
                 doc.text(dateText, 190 - dateWidth, 35);
+                
+                if (invoiceData.taxDetail.trim()) {
+                    doc.text(`Tax Detail: ${invoiceData.taxDetail}`, 20, 45);
+                }
                 
                 // Add sender info
                 doc.setFontSize(14);
