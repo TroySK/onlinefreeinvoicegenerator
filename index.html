@@ -2185,6 +2185,13 @@
                 calculateLineItemAmount(index);
             });
 
+            quantityInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Tab' && !e.shiftKey) {
+                    e.preventDefault();
+                    row.querySelector('.item-rate').focus();
+                }
+            });
+
             rateInput.addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value) || 0;
                 invoiceData.lineItems[index].rate = value;
@@ -2196,6 +2203,13 @@
                 calculateLineItemAmount(index);
             });
 
+            rateInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Tab' && !e.shiftKey) {
+                    e.preventDefault();
+                    row.querySelector('.item-tax').focus();
+                }
+            });
+
             taxInput.addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value) || 0;
                 invoiceData.lineItems[index].tax = Math.max(0, Math.min(100, value));
@@ -2205,6 +2219,23 @@
                     e.target.classList.remove('invalid');
                 }
                 calculateLineItemAmount(index);
+            });
+
+            // Tab order: from tax input, move to next row or create new row
+            taxInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Tab' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (index < lineItemsTable.rows.length - 1) {
+                        var nextRow = lineItemsTable.rows[index + 1];
+                        nextRow.querySelector('.item-description').focus();
+                    } else {
+                        addItem();
+                        setTimeout(function() {
+                            var newRow = lineItemsTable.rows[lineItemsTable.rows.length - 1];
+                            newRow.querySelector('.item-description').focus();
+                        }, 10);
+                    }
+                }
             });
 
             deleteBtn.addEventListener('click', () => {
