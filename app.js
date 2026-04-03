@@ -386,6 +386,17 @@
                     syncFromDOM();
                     updateLineItemCurrency();
                     saveInvoiceData();
+                } else if (e.target.id === 'due-date-preset') {
+                    var days = parseInt(e.target.value);
+                    if (!isNaN(days)) {
+                        var invoiceDate = document.getElementById('invoice-date').value;
+                        var baseDate = invoiceDate ? new Date(invoiceDate + 'T00:00:00') : new Date();
+                        var dueDate = new Date(baseDate.getTime() + days * 86400000);
+                        var dueDateStr = dueDate.toISOString().split('T')[0];
+                        document.getElementById('due-date').value = dueDateStr;
+                        syncFromDOM();
+                        saveInvoiceData();
+                    }
                 }
             });
 

@@ -279,6 +279,37 @@
             color: var(--text-secondary);
         }
 
+        .due-date-row {
+            display: flex;
+            gap: 8px;
+        }
+        .due-date-row input[type="date"] {
+            flex: 1;
+        }
+        .due-date-preset {
+            padding: 10px 12px;
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            transition: all 0.15s ease;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .due-date-preset:hover {
+            border-color: var(--border);
+        }
+        .due-date-preset:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+        }
+        .due-date-preset option[value=""] {
+            color: var(--text-secondary);
+        }
+
         .form-group input,
         .form-group textarea,
         .form-group select {
