@@ -1091,6 +1091,14 @@
                             <div class="error" id="invoice-date-error"></div>
                         </div>
                         <div class="form-group">
+                            <label for="due-date">Due Date</label>
+                            <input type="date" id="due-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="po-number">PO Number</label>
+                            <input type="text" id="po-number" placeholder="Optional">
+                        </div>
+                        <div class="form-group">
                             <label for="currency-select">Currency</label>
                             <select id="currency-select">
                                 <option value="USD">USD - US Dollar</option>
@@ -1208,6 +1216,20 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="card-section">
+                    <div class="card-section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        Notes &amp; Terms
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes / Payment Terms</label>
+                        <textarea id="notes" placeholder="Payment is due within 30 days. Thank you for your business!" style="min-height: 100px;"></textarea>
+                    </div>
+                </div>
             </div>
 
             <div class="action-bar">
@@ -1287,8 +1309,11 @@
         const invoiceData = {
             invoiceNumber: "INV-0001",
             date: new Date().toISOString().split('T')[0],
+            dueDate: "",
             currency: "USD",
             taxDetail: "",
+            poNumber: "",
+            notes: "",
             sender: {
                 name: "",
                 address: "",
@@ -1373,8 +1398,11 @@
                 const data = {
                     invoiceNumber: invoiceData.invoiceNumber,
                     date: invoiceData.date,
+                    dueDate: invoiceData.dueDate,
                     currency: invoiceData.currency,
                     taxDetail: invoiceData.taxDetail,
+                    poNumber: invoiceData.poNumber,
+                    notes: invoiceData.notes,
                     sender: { ...invoiceData.sender },
                     recipient: { ...invoiceData.recipient },
                     lineItems: invoiceData.lineItems.map(function(item) {
@@ -1397,8 +1425,11 @@
                 var data = JSON.parse(saved);
                 if (data.invoiceNumber) invoiceData.invoiceNumber = data.invoiceNumber;
                 if (data.date) invoiceData.date = data.date;
+                if (data.dueDate) invoiceData.dueDate = data.dueDate;
                 if (data.currency) invoiceData.currency = data.currency;
                 if (data.taxDetail) invoiceData.taxDetail = data.taxDetail;
+                if (data.poNumber) invoiceData.poNumber = data.poNumber;
+                if (data.notes) invoiceData.notes = data.notes;
                 if (data.sender) Object.assign(invoiceData.sender, data.sender);
                 if (data.recipient) Object.assign(invoiceData.recipient, data.recipient);
                 if (data.lineItems && data.lineItems.length > 0) {
@@ -1464,8 +1495,11 @@
                 document.getElementById('recipient-email').value = invoiceData.recipient.email || '';
                 document.getElementById('invoice-number').value = invoiceData.invoiceNumber || '';
                 document.getElementById('invoice-date').value = invoiceData.date || '';
+                document.getElementById('due-date').value = invoiceData.dueDate || '';
+                document.getElementById('po-number').value = invoiceData.poNumber || '';
                 document.getElementById('currency-select').value = invoiceData.currency || 'USD';
                 document.getElementById('tax-detail').value = invoiceData.taxDetail || '';
+                document.getElementById('notes').value = invoiceData.notes || '';
                 document.getElementById('discount').value = invoiceData.discount || '';
 
                 // Restore line items
@@ -1629,6 +1663,21 @@
             
             document.getElementById('tax-detail').addEventListener('input', (e) => {
                 invoiceData.taxDetail = e.target.value;
+                saveInvoiceData();
+            });
+
+            document.getElementById('due-date').addEventListener('input', (e) => {
+                invoiceData.dueDate = e.target.value;
+                saveInvoiceData();
+            });
+
+            document.getElementById('po-number').addEventListener('input', (e) => {
+                invoiceData.poNumber = e.target.value;
+                saveInvoiceData();
+            });
+
+            document.getElementById('notes').addEventListener('input', (e) => {
+                invoiceData.notes = e.target.value;
                 saveInvoiceData();
             });
             
@@ -2082,33 +2131,45 @@
                 var dateWidth = doc.getTextWidth(dateText);
                 doc.text(dateText, 190 - dateWidth, 35);
 
+                var infoY = 45;
+                if (invoiceData.dueDate) {
+                    doc.text("Due Date: " + invoiceData.dueDate, 20, infoY);
+                    infoY += 10;
+                }
+
+                if (invoiceData.poNumber.trim()) {
+                    doc.text("PO Number: " + invoiceData.poNumber, 20, infoY);
+                    infoY += 10;
+                }
+
                 if (invoiceData.taxDetail.trim()) {
-                    doc.text("Tax Detail: " + invoiceData.taxDetail, 20, 45);
+                    doc.text("Tax Detail: " + invoiceData.taxDetail, 20, infoY);
+                    infoY += 10;
                 }
 
                 doc.setFontSize(14);
                 doc.setTextColor.apply(doc, headerColor);
-                doc.text("From:", 20, 70);
+                doc.text("From:", 20, infoY + 10);
                 doc.setTextColor(0, 0, 0);
                 doc.setFontSize(12);
-                doc.text(invoiceData.sender.name, 20, 80);
+                doc.text(invoiceData.sender.name, 20, infoY + 20);
                 var senderAddressLines = doc.splitTextToSize(invoiceData.sender.address, 80);
-                doc.text(senderAddressLines, 20, 90);
+                doc.text(senderAddressLines, 20, infoY + 30);
                 var senderAddressHeight = senderAddressLines.length * 5;
-                doc.text(invoiceData.sender.email, 20, 90 + senderAddressHeight);
+                doc.text(invoiceData.sender.email, 20, infoY + 30 + senderAddressHeight);
 
                 doc.setFontSize(14);
                 doc.setTextColor.apply(doc, headerColor);
-                doc.text("To:", 120, 70);
+                doc.text("To:", 120, infoY + 10);
                 doc.setTextColor(0, 0, 0);
                 doc.setFontSize(12);
-                doc.text(invoiceData.recipient.name, 120, 80);
+                doc.text(invoiceData.recipient.name, 120, infoY + 20);
                 var recipientAddressLines = doc.splitTextToSize(invoiceData.recipient.address, 80);
-                doc.text(recipientAddressLines, 120, 90);
+                doc.text(recipientAddressLines, 120, infoY + 30);
                 var recipientAddressHeight = recipientAddressLines.length * 5;
-                doc.text(invoiceData.recipient.email, 120, 90 + recipientAddressHeight);
+                doc.text(invoiceData.recipient.email, 120, infoY + 30 + recipientAddressHeight);
 
-                var tableStartY = Math.max(110, 100 + Math.max(senderAddressHeight, recipientAddressHeight) + 10);
+                var tableStartY = Math.max(110, infoY + 40 + Math.max(senderAddressHeight, recipientAddressHeight));
                 var adjustedTableStartY = tableStartY + 10;
 
                 var headers = [["Description", "Quantity", "Rate", "Tax %", "Amount"]];
@@ -2162,6 +2223,16 @@
                 doc.text('Grand Total:', labelX, finalY + (lineHeight * 4));
                 var grandTotalText = currencyDisplay + invoiceData.grandTotal.toFixed(2);
                 doc.text(grandTotalText, valueX - doc.getTextWidth(grandTotalText), finalY + (lineHeight * 4));
+
+                if (invoiceData.notes.trim()) {
+                    var notesY = finalY + (lineHeight * 5) + 10;
+                    doc.setFontSize(10);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text("Notes / Terms:", 20, notesY);
+                    doc.setFontSize(9);
+                    var notesLines = doc.splitTextToSize(invoiceData.notes, 170);
+                    doc.text(notesLines, 20, notesY + 6);
+                }
 
                 doc.save("invoice-" + invoiceData.invoiceNumber + ".pdf");
 
