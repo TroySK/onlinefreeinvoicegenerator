@@ -1356,39 +1356,20 @@
             date: ""
         };
 
-        // Currency symbols
-        const currencySymbols = {
-            "USD": "$ ",
-            "EUR": "€ ",
-            "GBP": "£ ",
-            "CAD": "CAD ",
-            "AUD": "AUD ",
-            "JPY": "JPY ",
-            "CNY": "CNY ",
-            "INR": "INR ",
-            "BRL": "BRL ",
-            "MXN": "MXN ",
-            "SGD": "SGD ",
-            "NZD": "NZD ",
-            "CHF": "CHF ",
-            "HKD": "HKD ",
-            "SEK": "SEK ",
-            "NOK": "NOK ",
-            "DKK": "DKK ",
-            "ZAR": "ZAR ",
-            "RUB": "RUB ",
-            "KRW": "KRW ",
-            "TRY": "TRY ",
-            "AED": "AED ",
-            "SAR": "SAR ",
-            "ILS": "ILS ",
-            "ARS": "ARS ",
-            "CLP": "CLP ",
-            "COP": "COP ",
-            "PEN": "PEN ",
-            "UYU": "UYU ",
-            "EGP": "EGP "
-        };
+        // Currency display using Intl.NumberFormat
+        function getCurrencyDisplay(currencyCode) {
+            try {
+                var parts = new Intl.NumberFormat('en', { style: 'currency', currency: currencyCode }).formatToParts(0);
+                for (var i = 0; i < parts.length; i++) {
+                    if (parts[i].type === 'currency') {
+                        return parts[i].value + ' ';
+                    }
+                }
+            } catch (e) {
+                // Fallback to currency code
+            }
+            return currencyCode + ' ';
+        }
 
         // LocalStorage persistence
         const STORAGE_KEY = "invoice_data";
@@ -2005,10 +1986,6 @@
         }
 
         // Helper function to get currency symbol or code
-        function getCurrencyDisplay(currencyCode) {
-            return currencySymbols[currencyCode] || `${currencyCode} `;
-        }
-
         // Update currency display
         function updateCurrencyDisplay() {
             const currencyDisplay = getCurrencyDisplay(invoiceData.currency);
@@ -2265,6 +2242,14 @@
             });
 
             init();
+
+            // Keyboard shortcut: Ctrl+S / Cmd+S to download
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    downloadPDF();
+                }
+            });
         });
     </script>
 </main>
