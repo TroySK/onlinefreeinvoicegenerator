@@ -1759,7 +1759,7 @@
         // Calculate line item amount
         function calculateLineItemAmount(index) {
             const item = invoiceData.lineItems[index];
-            const amount = item.quantity * item.rate * (1 + item.tax / 100);
+            const amount = item.quantity * item.rate;
             const taxAmount = item.quantity * item.rate * item.tax / 100;
             
             item.amount = parseFloat(amount.toFixed(2));
