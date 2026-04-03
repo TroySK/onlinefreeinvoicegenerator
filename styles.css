@@ -1213,11 +1213,59 @@
 
             body {
                 background: white;
+                color: #000;
             }
 
             .invoice-card {
                 box-shadow: none;
                 border: none;
                 padding: 0;
+            }
+
+            /* Make form inputs look like rendered text when printed */
+            input, textarea, select {
+                border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                font-family: var(--font-sans) !important;
+                color: #000 !important;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+            }
+
+            /* Hide placeholders when printing */
+            input::placeholder, textarea::placeholder {
+                color: transparent !important;
+            }
+
+            /* Hide interactive elements */
+            .delete-row-btn, #add-item-btn, .theme-toggle, .save-status {
+                display: none !important;
+            }
+
+            /* Hide due date preset dropdown */
+            .due-date-preset {
+                display: none !important;
+            }
+
+            /* Make table rows print cleanly */
+            .line-items td:before {
+                font-weight: 700;
+            }
+
+            /* Ensure sections are visible */
+            .form-section {
+                break-inside: avoid;
+            }
+
+            .totals {
+                break-inside: avoid;
+            }
+
+            /* Hide logo upload area, keep preview */
+            #logo-placeholder, .logo-upload {
+                display: none !important;
             }
         }
