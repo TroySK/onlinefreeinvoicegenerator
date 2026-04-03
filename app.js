@@ -152,75 +152,122 @@
         const downloadBtn = document.getElementById('download-btn');
         const lineItemsTable = document.getElementById('line-items').getElementsByTagName('tbody')[0];
 
+        // Sync data model from DOM (reads all form values into invoiceData)
+        function syncFromDOM() {
+            invoiceData.sender.name = document.getElementById('sender-name').value;
+            invoiceData.sender.address = document.getElementById('sender-address').value;
+            invoiceData.sender.email = document.getElementById('sender-email').value;
+            invoiceData.recipient.name = document.getElementById('recipient-name').value;
+            invoiceData.recipient.address = document.getElementById('recipient-address').value;
+            invoiceData.recipient.email = document.getElementById('recipient-email').value;
+            invoiceData.invoiceNumber = document.getElementById('invoice-number').value;
+            invoiceData.date = document.getElementById('invoice-date').value;
+            invoiceData.dueDate = document.getElementById('due-date').value;
+            invoiceData.poNumber = document.getElementById('po-number').value;
+            invoiceData.currency = document.getElementById('currency-select').value;
+            invoiceData.taxDetail = document.getElementById('tax-detail').value;
+            invoiceData.notes = document.getElementById('notes').value;
+            invoiceData.discount = Math.max(0, parseFloat(document.getElementById('discount').value) || 0);
+
+            // Read line items from DOM
+            var rows = lineItemsTable.rows;
+            invoiceData.lineItems = [];
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                invoiceData.lineItems.push({
+                    description: row.querySelector('.item-description').value,
+                    quantity: parseFloat(row.querySelector('.item-quantity').value) || 0,
+                    rate: parseFloat(row.querySelector('.item-rate').value) || 0,
+                    tax: parseFloat(row.querySelector('.item-tax').value) || 0,
+                    amount: 0,
+                    taxAmount: 0
+                });
+            }
+
+            // Read template selection
+            var checkedRadio = document.querySelector('input[name="template"]:checked');
+            if (checkedRadio) {
+                invoiceData.template = checkedRadio.value;
+            }
+        }
+
+        // Sync DOM from data model (writes invoiceData to all form values)
+        function syncToDOM() {
+            document.getElementById('sender-name').value = invoiceData.sender.name || '';
+            document.getElementById('sender-address').value = invoiceData.sender.address || '';
+            document.getElementById('sender-email').value = invoiceData.sender.email || '';
+            document.getElementById('recipient-name').value = invoiceData.recipient.name || '';
+            document.getElementById('recipient-address').value = invoiceData.recipient.address || '';
+            document.getElementById('recipient-email').value = invoiceData.recipient.email || '';
+            document.getElementById('invoice-number').value = invoiceData.invoiceNumber || '';
+            document.getElementById('invoice-date').value = invoiceData.date || '';
+            document.getElementById('due-date').value = invoiceData.dueDate || '';
+            document.getElementById('po-number').value = invoiceData.poNumber || '';
+            document.getElementById('currency-select').value = invoiceData.currency || 'USD';
+            document.getElementById('tax-detail').value = invoiceData.taxDetail || '';
+            document.getElementById('notes').value = invoiceData.notes || '';
+            document.getElementById('discount').value = invoiceData.discount || '';
+
+            // Restore logo
+            if (invoiceData.logo) {
+                document.getElementById('logo-placeholder').style.display = 'none';
+                document.getElementById('logo-preview').style.display = 'flex';
+                document.getElementById('logo-preview-img').src = invoiceData.logo;
+            }
+
+            // Restore line items
+            while (lineItemsTable.rows.length > 0) {
+                lineItemsTable.deleteRow(0);
+            }
+
+            invoiceData.lineItems.forEach(function(item, i) {
+                var row = lineItemsTable.insertRow();
+                row.innerHTML =
+                    '<td data-label="Description"><textarea class="item-description" placeholder="Item description">' + item.description + '</textarea></td>' +
+                    '<td data-label="Quantity"><input type="number" class="item-quantity" placeholder="0" min="0" step="1" value="' + (item.quantity || '') + '"></td>' +
+                    '<td data-label="Rate"><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01" value="' + (item.rate || '') + '"></td>' +
+                    '<td data-label="Tax (%)" class="tax-cell">' +
+                        '<input type="number" class="item-tax" placeholder="0" min="0" max="100" step="0.1" value="' + (item.tax || '') + '">' +
+                        '<div class="tax-amount" id="tax-amount-' + i + '"></div>' +
+                    '</td>' +
+                    '<td data-label="Amount" class="item-amount">' + item.amount.toFixed(2) + '</td>' +
+                    '<td data-label="Actions" class="actions-col">' +
+                        '<button type="button" class="delete-row-btn" aria-label="Remove line item">' +
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                                '<polyline points="3 6 5 6 21 6"></polyline>' +
+                                '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>' +
+                            '</svg>' +
+                        '</button>' +
+                    '</td>';
+                attachRowListeners(row, i);
+            });
+            updateDeleteButtons();
+
+            // Restore template selection
+            var radios = document.querySelectorAll('input[name="template"]');
+            radios.forEach(function(r) {
+                r.checked = (r.value === invoiceData.template);
+            });
+
+            updateCurrencyDisplay();
+        }
+
         // Initialize the app
         function init() {
             // Try to load saved data first
-            const hasSavedData = loadInvoiceData();
+            var hasSavedData = loadInvoiceData();
 
             // Set today's date as default (only if no saved data)
             if (!hasSavedData) {
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('invoice-date').value = today;
+                var today = new Date().toISOString().split('T')[0];
                 invoiceData.date = today;
-            } else {
-                // Restore saved form values
-                document.getElementById('sender-name').value = invoiceData.sender.name || '';
-                document.getElementById('sender-address').value = invoiceData.sender.address || '';
-                document.getElementById('sender-email').value = invoiceData.sender.email || '';
-                document.getElementById('recipient-name').value = invoiceData.recipient.name || '';
-                document.getElementById('recipient-address').value = invoiceData.recipient.address || '';
-                document.getElementById('recipient-email').value = invoiceData.recipient.email || '';
-                document.getElementById('invoice-number').value = invoiceData.invoiceNumber || '';
-                document.getElementById('invoice-date').value = invoiceData.date || '';
-                document.getElementById('due-date').value = invoiceData.dueDate || '';
-                document.getElementById('po-number').value = invoiceData.poNumber || '';
-                document.getElementById('currency-select').value = invoiceData.currency || 'USD';
-                document.getElementById('tax-detail').value = invoiceData.taxDetail || '';
-                document.getElementById('notes').value = invoiceData.notes || '';
-                document.getElementById('discount').value = invoiceData.discount || '';
-
-                // Restore logo
-                if (invoiceData.logo) {
-                    document.getElementById('logo-placeholder').style.display = 'none';
-                    document.getElementById('logo-preview').style.display = 'flex';
-                    document.getElementById('logo-preview-img').src = invoiceData.logo;
-                }
-
-                // Restore line items
-                while (lineItemsTable.rows.length > 0) {
-                    lineItemsTable.deleteRow(0);
-                }
-
-                invoiceData.lineItems.forEach(function(item, i) {
-                    const row = lineItemsTable.insertRow();
-                    row.innerHTML = `
-                        <td data-label="Description"><textarea class="item-description" placeholder="Item description">${item.description}</textarea></td>
-                        <td data-label="Quantity"><input type="number" class="item-quantity" placeholder="0" min="0" step="1" value="${item.quantity || ''}"></td>
-                        <td data-label="Rate"><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01" value="${item.rate || ''}"></td>
-                        <td data-label="Tax (%)" class="tax-cell">
-                            <input type="number" class="item-tax" placeholder="0" min="0" max="100" step="0.1" value="${item.tax || ''}">
-                            <div class="tax-amount" id="tax-amount-${i}"></div>
-                        </td>
-                        <td data-label="Amount" class="item-amount">${item.amount.toFixed(2)}</td>
-                        <td data-label="Actions" class="actions-col">
-                            <button type="button" class="delete-row-btn" aria-label="Remove line item">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                            </button>
-                        </td>
-                    `;
-                    attachRowListeners(row, i);
-                });
-                updateDeleteButtons();
             }
-            
+
             // Set default template
             invoiceData.template = 'modern1';
-            
+
             // Set default currency based on user's browser language
-            const userLanguage = navigator.language || 'en-US';
+            var userLanguage = navigator.language || 'en-US';
             const languageToCurrencyMap = {
                 'en-US': 'USD',
                 'en-GB': 'GBP',
@@ -284,100 +331,66 @@
             const defaultCurrency = languageToCurrencyMap[userLanguage] || languageToCurrencyMap[userLanguage.split('-')[0]] || 'USD';
             document.getElementById('currency-select').value = defaultCurrency;
             invoiceData.currency = defaultCurrency;
-            
-            // Add event listeners
-            document.getElementById('sender-name').addEventListener('input', (e) => {
-                invoiceData.sender.name = e.target.value;
-                validateField('sender', 'name', e.target.value);
+
+            // Restore saved data into DOM
+            syncToDOM();
+
+            // Use syncFromDOM on all form input changes, then save
+            var formContainer = document.getElementById('invoice-container');
+            formContainer.addEventListener('input', function(e) {
+                syncFromDOM();
+                // Run validation for relevant fields
+                if (e.target.id === 'sender-name') validateField('sender', 'name', e.target.value);
+                else if (e.target.id === 'sender-address') validateField('sender', 'address', e.target.value);
+                else if (e.target.id === 'sender-email') validateField('sender', 'email', e.target.value);
+                else if (e.target.id === 'recipient-name') validateField('recipient', 'name', e.target.value);
+                else if (e.target.id === 'recipient-address') validateField('recipient', 'address', e.target.value);
+                else if (e.target.id === 'recipient-email') validateField('recipient', 'email', e.target.value);
+                else if (e.target.id === 'invoice-number') validateField('invoiceNumber', null, e.target.value);
+                else if (e.target.id === 'invoice-date') validateField('date', null, e.target.value);
                 saveInvoiceData();
-            });
-            
-            document.getElementById('sender-address').addEventListener('input', (e) => {
-                invoiceData.sender.address = e.target.value;
-                validateField('sender', 'address', e.target.value);
-                saveInvoiceData();
-            });
-            
-            document.getElementById('sender-email').addEventListener('input', (e) => {
-                invoiceData.sender.email = e.target.value;
-                validateField('sender', 'email', e.target.value);
-                saveInvoiceData();
-            });
-            
-            document.getElementById('recipient-name').addEventListener('input', (e) => {
-                invoiceData.recipient.name = e.target.value;
-                validateField('recipient', 'name', e.target.value);
-                saveInvoiceData();
-            });
-            
-            document.getElementById('recipient-address').addEventListener('input', (e) => {
-                invoiceData.recipient.address = e.target.value;
-                validateField('recipient', 'address', e.target.value);
-                saveInvoiceData();
-            });
-            
-            document.getElementById('recipient-email').addEventListener('input', (e) => {
-                invoiceData.recipient.email = e.target.value;
-                validateField('recipient', 'email', e.target.value);
-                saveInvoiceData();
-            });
-            
-            document.getElementById('invoice-number').addEventListener('input', (e) => {
-                invoiceData.invoiceNumber = e.target.value;
-                validateField('invoiceNumber', null, e.target.value);
-                saveInvoiceData();
-            });
-            
-            document.getElementById('invoice-date').addEventListener('input', (e) => {
-                invoiceData.date = e.target.value;
-                validateField('date', null, e.target.value);
-                saveInvoiceData();
-            });
-            
-            document.getElementById('currency-select').addEventListener('change', (e) => {
-                invoiceData.currency = e.target.value;
-                updateLineItemCurrency();
-                saveInvoiceData();
-            });
-            
-            document.getElementById('discount').addEventListener('input', (e) => {
-                invoiceData.discount = parseFloat(e.target.value) || 0;
-                calculateTotals();
             });
 
-            document.getElementById('discount').addEventListener('blur', (e) => {
+            formContainer.addEventListener('change', function(e) {
+                if (e.target.id === 'currency-select') {
+                    syncFromDOM();
+                    updateLineItemCurrency();
+                    saveInvoiceData();
+                }
+            });
+
+            // Discount auto-format
+            var discountInput = document.getElementById('discount');
+            discountInput.addEventListener('blur', function(e) {
                 var val = parseFloat(e.target.value);
                 if (!isNaN(val) && val > 0) {
                     e.target.value = val.toFixed(2);
                 }
             });
-
-            document.getElementById('discount').addEventListener('focus', (e) => {
+            discountInput.addEventListener('focus', function(e) {
                 var val = parseFloat(e.target.value);
                 if (!isNaN(val)) {
                     e.target.value = val;
                 }
             });
-            
-            document.getElementById('tax-detail').addEventListener('input', (e) => {
-                invoiceData.taxDetail = e.target.value;
-                saveInvoiceData();
-            });
 
-            document.getElementById('due-date').addEventListener('input', (e) => {
-                invoiceData.dueDate = e.target.value;
-                saveInvoiceData();
-            });
-
-            document.getElementById('po-number').addEventListener('input', (e) => {
-                invoiceData.poNumber = e.target.value;
-                saveInvoiceData();
-            });
-
-            document.getElementById('notes').addEventListener('input', (e) => {
-                invoiceData.notes = e.target.value;
-                saveInvoiceData();
-            });
+            // Rate auto-format (delegated)
+            formContainer.addEventListener('blur', function(e) {
+                if (e.target.classList.contains('item-rate')) {
+                    var val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val > 0) {
+                        e.target.value = val.toFixed(2);
+                    }
+                }
+            }, true);
+            formContainer.addEventListener('focus', function(e) {
+                if (e.target.classList.contains('item-rate')) {
+                    var val = parseFloat(e.target.value);
+                    if (!isNaN(val)) {
+                        e.target.value = val;
+                    }
+                }
+            }, true);
 
             // Logo upload
             var logoInput = document.getElementById('logo-input');
@@ -416,7 +429,7 @@
                 logoPreviewImg.src = '';
                 saveInvoiceData();
             });
-            
+
             document.getElementById('add-item-btn').addEventListener('click', addItem);
             document.getElementById('download-btn').addEventListener('click', downloadPDF);
 
@@ -440,15 +453,7 @@
                 invoiceData.discount = 0;
                 invoiceData.grandTotal = 0;
 
-                document.getElementById('invoice-number').value = invoiceData.invoiceNumber;
-                document.getElementById('invoice-date').value = today;
-                document.getElementById('due-date').value = '';
-                document.getElementById('po-number').value = '';
-                document.getElementById('notes').value = '';
-                document.getElementById('recipient-name').value = '';
-                document.getElementById('recipient-address').value = '';
-                document.getElementById('recipient-email').value = '';
-                document.getElementById('discount').value = '';
+                syncToDOM();
 
                 ['recipient-name', 'recipient-email', 'invoice-number'].forEach(function(id) {
                     var el = document.getElementById(id);
