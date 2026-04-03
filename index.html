@@ -362,6 +362,11 @@
             transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
 
+        .line-items input.zero-hint {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
         .form-group input.invalid:focus,
         .form-group textarea.invalid:focus {
             box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
@@ -1843,7 +1848,7 @@
             invoiceData.template = 'modern1';
             
             // Set default currency based on user's browser language
-            const userLanguage = navigator.language || navigator.userLanguage || 'en-US';
+            const userLanguage = navigator.language || 'en-US';
             const languageToCurrencyMap = {
                 'en-US': 'USD',
                 'en-GB': 'GBP',
@@ -1959,7 +1964,7 @@
             
             document.getElementById('currency-select').addEventListener('change', (e) => {
                 invoiceData.currency = e.target.value;
-                calculateTotals();
+                updateLineItemCurrency();
                 saveInvoiceData();
             });
             
@@ -2188,6 +2193,11 @@
 
         // Update template
         function updateTemplate() {
+            var validTemplates = ['modern1', 'classic', 'business'];
+            if (validTemplates.indexOf(invoiceData.template) === -1) {
+                invoiceData.template = 'modern1';
+            }
+
             // Remove all template classes
             invoiceContainer.classList.remove('template-modern1', 'template-classic', 'template-business');
             
@@ -2323,8 +2333,13 @@
                 invoiceData.lineItems[index].quantity = value;
                 if (value < 0) {
                     e.target.classList.add('invalid');
+                    e.target.classList.remove('zero-hint');
+                } else if (value === 0) {
+                    e.target.classList.remove('invalid');
+                    e.target.classList.add('zero-hint');
                 } else {
                     e.target.classList.remove('invalid');
+                    e.target.classList.remove('zero-hint');
                 }
                 calculateLineItemAmount(index);
             });
@@ -2432,8 +2447,8 @@
             calculateTotals();
         }
 
-        // Calculate invoice totals
-        function calculateTotals() {
+        // Calculate invoice totals (internal, non-debounced)
+        function _calculateTotals() {
             // Calculate subtotal with proper rounding
             invoiceData.subtotal = parseFloat(
                 invoiceData.lineItems.reduce(function(sum, item) {
@@ -2466,22 +2481,36 @@
             saveInvoiceData();
         }
 
-        // Helper function to get currency symbol or code
-        // Update currency display
-        function updateCurrencyDisplay() {
-            const currencyDisplay = getCurrencyDisplay(invoiceData.currency);
-            
-            document.getElementById('subtotal').textContent = `${currencyDisplay}${invoiceData.subtotal.toFixed(2)}`;
-            document.getElementById('total-tax').textContent = `${currencyDisplay}${invoiceData.totalTax.toFixed(2)}`;
-            document.getElementById('grand-total').textContent = `${currencyDisplay}${invoiceData.grandTotal.toFixed(2)}`;
-            
-            // Update line item amounts
-            for (let i = 0; i < invoiceData.lineItems.length; i++) {
-                const amountCell = lineItemsTable.rows[i].cells[4];
+        // Debounced calculateTotals
+        var calcTimeout;
+        function calculateTotals() {
+            clearTimeout(calcTimeout);
+            calcTimeout = setTimeout(_calculateTotals, 100);
+        }
+
+        // Update totals display (called on every calculation)
+        function updateTotalsDisplay() {
+            var currencyDisplay = getCurrencyDisplay(invoiceData.currency);
+            document.getElementById('subtotal').textContent = currencyDisplay + invoiceData.subtotal.toFixed(2);
+            document.getElementById('total-tax').textContent = currencyDisplay + invoiceData.totalTax.toFixed(2);
+            document.getElementById('grand-total').textContent = currencyDisplay + invoiceData.grandTotal.toFixed(2);
+        }
+
+        // Update line item currency display (only called when currency changes)
+        function updateLineItemCurrency() {
+            var currencyDisplay = getCurrencyDisplay(invoiceData.currency);
+            for (var i = 0; i < invoiceData.lineItems.length; i++) {
+                var amountCell = lineItemsTable.rows[i].cells[4];
                 if (amountCell) {
-                    amountCell.textContent = `${currencyDisplay}${invoiceData.lineItems[i].amount.toFixed(2)}`;
+                    amountCell.textContent = currencyDisplay + invoiceData.lineItems[i].amount.toFixed(2);
                 }
             }
+            updateTotalsDisplay();
+        }
+
+        // Update currency display (alias for totals — called by calculateTotals)
+        function updateCurrencyDisplay() {
+            updateTotalsDisplay();
         }
 
         // Toast notification
