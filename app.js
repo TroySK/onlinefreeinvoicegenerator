@@ -242,33 +242,98 @@
                 document.getElementById('logo-preview-img').src = invoiceData.logo;
             }
 
-            // Restore line items
-            while (lineItemsTable.rows.length > 0) {
-                lineItemsTable.deleteRow(0);
+            // Restore line items — diff and update to preserve focus
+            var currentRowCount = lineItemsTable.rows.length;
+            var desiredRowCount = invoiceData.lineItems.length;
+            var activeEl = document.activeElement;
+            var activeRow = -1;
+            var activeField = null;
+
+            // Track which element has focus
+            if (activeEl && activeEl.closest && activeEl.closest('tbody') === lineItemsTable) {
+                var parentRow = activeEl.closest('tr');
+                if (parentRow) {
+                    activeRow = Array.prototype.indexOf.call(lineItemsTable.rows, parentRow);
+                    if (activeEl.classList.contains('item-description')) activeField = 'description';
+                    else if (activeEl.classList.contains('item-quantity')) activeField = 'quantity';
+                    else if (activeEl.classList.contains('item-rate')) activeField = 'rate';
+                    else if (activeEl.classList.contains('item-tax')) activeField = 'tax';
+                }
             }
 
+            // Remove extra rows
+            while (lineItemsTable.rows.length > desiredRowCount) {
+                lineItemsTable.deleteRow(lineItemsTable.rows.length - 1);
+            }
+
+            // Update existing rows or add new ones
             invoiceData.lineItems.forEach(function(item, i) {
-                var row = lineItemsTable.insertRow();
-                row.innerHTML =
-                    '<td data-label="Description"><textarea class="item-description" placeholder="Item description">' + item.description + '</textarea></td>' +
-                    '<td data-label="Quantity"><input type="number" class="item-quantity" placeholder="0" min="0" step="1" value="' + (item.quantity || '') + '"></td>' +
-                    '<td data-label="Rate"><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01" value="' + (item.rate || '') + '"></td>' +
-                    '<td data-label="Tax (%)" class="tax-cell">' +
-                        '<input type="number" class="item-tax" placeholder="0" min="0" max="100" step="0.1" value="' + (item.tax || '') + '">' +
-                        '<div class="tax-amount" id="tax-amount-' + i + '"></div>' +
-                    '</td>' +
-                    '<td data-label="Amount" class="item-amount">' + item.amount.toFixed(2) + '</td>' +
-                    '<td data-label="Actions" class="actions-col">' +
-                        '<button type="button" class="delete-row-btn" aria-label="Remove line item">' +
-                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-                                '<polyline points="3 6 5 6 21 6"></polyline>' +
-                                '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>' +
-                            '</svg>' +
-                        '</button>' +
-                    '</td>';
-                attachRowListeners(row, i);
+                var row;
+                if (i < lineItemsTable.rows.length) {
+                    row = lineItemsTable.rows[i];
+                } else {
+                    row = lineItemsTable.insertRow();
+                    row.innerHTML =
+                        '<td data-label="Description"><textarea class="item-description" placeholder="Item description"></textarea></td>' +
+                        '<td data-label="Quantity"><input type="number" class="item-quantity" placeholder="0" min="0" step="1"></td>' +
+                        '<td data-label="Rate"><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01"></td>' +
+                        '<td data-label="Tax (%)" class="tax-cell">' +
+                            '<input type="number" class="item-tax" placeholder="0" min="0" max="100" step="0.1">' +
+                            '<div class="tax-amount" id="tax-amount-' + i + '"></div>' +
+                        '</td>' +
+                        '<td data-label="Amount" class="item-amount">' + item.amount.toFixed(2) + '</td>' +
+                        '<td data-label="Actions" class="actions-col">' +
+                            '<button type="button" class="delete-row-btn" aria-label="Remove line item">' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                                    '<polyline points="3 6 5 6 21 6"></polyline>' +
+                                    '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>' +
+                                '</svg>' +
+                            '</button>' +
+                        '</td>';
+                    attachRowListeners(row, i);
+                }
+
+                // Update values only if they differ (avoid disrupting focus)
+                var descEl = row.querySelector('.item-description');
+                var qtyEl = row.querySelector('.item-quantity');
+                var rateEl = row.querySelector('.item-rate');
+                var taxEl = row.querySelector('.item-tax');
+                var amountEl = row.cells[4];
+
+                if (descEl.value !== item.description) descEl.value = item.description;
+                if (qtyEl.value !== String(item.quantity || '')) qtyEl.value = item.quantity || '';
+                if (rateEl.value !== String(item.rate || '')) rateEl.value = item.rate || '';
+                if (taxEl.value !== String(item.tax || '')) taxEl.value = item.tax || '';
+                if (amountEl.textContent !== item.amount.toFixed(2)) amountEl.textContent = item.amount.toFixed(2);
+
+                // Update tax amount display
+                var taxAmountElement = document.getElementById('tax-amount-' + i);
+                if (taxAmountElement) {
+                    if (item.taxAmount > 0) {
+                        taxAmountElement.textContent = '(' + item.taxAmount.toFixed(2) + ')';
+                        taxAmountElement.style.display = '';
+                    } else {
+                        taxAmountElement.textContent = '';
+                        taxAmountElement.style.display = 'none';
+                    }
+                }
+
                 updateEmptyRowHint(i);
             });
+
+            // Restore focus
+            if (activeRow >= 0 && activeRow < lineItemsTable.rows.length && activeField) {
+                var restoredRow = lineItemsTable.rows[activeRow];
+                var fieldMap = {
+                    description: '.item-description',
+                    quantity: '.item-quantity',
+                    rate: '.item-rate',
+                    tax: '.item-tax'
+                };
+                var el = restoredRow.querySelector(fieldMap[activeField]);
+                if (el) el.focus();
+            }
+
             updateDeleteButtons();
 
             // Restore template selection

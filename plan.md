@@ -105,15 +105,15 @@
 - [ ] #78: **Share button doesn't include PDF attachment** — The share/email only sends text summary. Could generate PDF as blob and attach via Web Share API (if supported) or provide a download link.
 
 ### P3 — UI Polish
-- [ ] #79: **Classic template doesn't switch to dark mode properly** — The `.template-classic .totals` forces `background: #ffffff` even in dark mode (only overridden for dark via `[data-theme="dark"]` selector, but the selector targets `.template-classic` on the container, not on `.totals` directly in dark mode).
-- [ ] #80: **Empty line items with 0.00 amounts look cluttered** — After adding multiple line items, empty rows with `0.00` amounts take up space. Could collapse or visually de-emphasize empty rows.
-- [ ] #81: **No visual feedback when localStorage saves** — Users have no indication their work is being auto-saved. Could add a subtle "Saved" indicator near the title or in the status bar.
+- ✅ #79/#99: **Classic template dark mode** — Verified working. The selector `[data-theme="dark"] .template-classic .totals` has higher specificity (0-2-1) than `.template-classic .totals` (0-2-0) and correctly overrides the white background in dark mode.
+- [ ] #80: ~~**Empty line items with 0.00 amounts look cluttered**~~ — Fixed with `.empty-row` class (opacity 0.45, dashed borders).
+- [ ] #81: ~~**No visual feedback when localStorage saves**~~ — Fixed with "✓ Saved" indicator in navbar.
 - [ ] #82: **Currency selector is very long (30+ options)** — On mobile, the dropdown is unwieldy. Could group by region or add a search/filter within the dropdown.
-- [ ] #83: **Tax amount `(0.00)` overlaps with input on narrow screens** — In mobile view, the tax amount display below the tax input can overlap or cause layout shift.
+- [ ] #83: ~~**Tax amount `(0.00)` overlaps with input on narrow screens**~~ — Fixed by hiding tax amount when 0 (#93).
 
 ### Code Quality
 - [ ] #84: **`calculateLineItemAmount` directly accesses DOM** — Should use the data model and let `syncToDOM` handle updates, rather than directly manipulating `lineItemsTable.rows[index].cells[4]`.
-- [ ] #85: **Magic numbers in PDF generation** — Values like `20`, `190`, `35`, `45`, `110`, `140`, `190` are scattered throughout `downloadPDF()`. Should be extracted to named constants (e.g., `PDF_MARGIN_LEFT`, `PDF_PAGE_WIDTH`).
+- [ ] #85: ~~**Magic numbers in PDF generation**~~ — Fixed by extracting to `PDF` constants object.
 - [ ] #86: **`syncToDOM` rebuilds all line items from scratch** — This is inefficient and loses focus state. If a user is editing a field and `syncToDOM` is called (e.g., after loading saved data), they lose their cursor position. Should diff and update rather than rebuild.
 - [ ] #87: **No error handling for `localStorage` quota exceeded** — If logo is large (near 2MB), base64 encoding could exceed localStorage quota (typically 5-10MB). The `saveInvoiceData` try/catch silently fails, but user has no indication their data wasn't saved.
 
