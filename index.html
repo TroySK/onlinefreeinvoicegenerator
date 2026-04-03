@@ -59,7 +59,7 @@
             --warning: #fbbf24;
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
-            --text-muted: #64748b;
+            --text-muted: #7c8ba1;
             --bg-page: #0f172a;
             --bg-surface: #1e293b;
             --bg-subtle: #334155;
@@ -952,6 +952,26 @@
             .navbar-title {
                 font-size: 1rem;
             }
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* Focus visible for keyboard navigation */
+        .btn:focus-visible,
+        .theme-toggle:focus-visible,
+        .template-option label:focus-visible,
+        .delete-row-btn:focus-visible,
+        .toast-close:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
 
         @media print {
