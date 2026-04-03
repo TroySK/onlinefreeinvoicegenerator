@@ -972,19 +972,26 @@
 
             var toast = document.createElement('div');
             toast.id = 'toast';
-            toast.className = 'toast toast-' + type;
             toast.setAttribute('role', 'alert');
-            toast.setAttribute('aria-live', 'polite');
-            toast.innerHTML = '<span>' + message + '</span><button class="toast-close" aria-label="Dismiss">&times;</button>';
+            toast.setAttribute('aria-live', 'assertive');
+            toast.className = 'toast toast-' + type;
+
+            var icon = type === 'success'
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
+                : type === 'error'
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>'
+                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+
+            toast.innerHTML = '<div class="toast-icon">' + icon + '</div><div class="toast-content">' + message + '</div><button class="toast-close" aria-label="Dismiss notification">\u00d7</button>';
             document.body.appendChild(toast);
+
+            requestAnimationFrame(function() {
+                toast.classList.add('show');
+            });
 
             toast.querySelector('.toast-close').addEventListener('click', function() {
                 toast.classList.remove('show');
                 setTimeout(function() { toast.remove(); }, 300);
-            });
-
-            requestAnimationFrame(function() {
-                toast.classList.add('show');
             });
 
             setTimeout(function() {
@@ -992,6 +999,50 @@
                 setTimeout(function() { toast.remove(); }, 300);
             }, 5000);
         }
+
+        // PDF layout constants
+        var PDF = {
+            PAGE_WIDTH: 210, // A4 width in mm
+            MARGIN_LEFT: 20,
+            MARGIN_RIGHT: 20,
+            CONTENT_WIDTH: 170, // PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
+            TOP_TITLE_Y: 20,
+            INVOICE_NO_Y: 35,
+            INFO_START_Y: 45,
+            INFO_LINE_HEIGHT: 10,
+            FROM_X: 20,
+            TO_X: 120,
+            FROM_TO_LABEL_Y_OFFSET: 10,
+            FROM_TO_NAME_Y_OFFSET: 20,
+            FROM_TO_ADDR_Y_OFFSET: 30,
+            ADDR_LINE_HEIGHT: 5,
+            ADDR_WIDTH: 80,
+            TABLE_MIN_Y: 110,
+            TABLE_Y_OFFSET: 10,
+            TABLE_CELL_PADDING: 3,
+            TABLE_FONT_SIZE: 10,
+            TOTALS_LABEL_X: 140,
+            TOTALS_VALUE_X: 190,
+            TOTALS_LINE_HEIGHT: 10,
+            GRAND_TOTAL_FONT_SIZE: 14,
+            NOTES_Y_OFFSET: 10,
+            NOTES_LINE_HEIGHT: 6,
+            NOTES_FONT_SIZE: 9,
+            NOTES_LABEL_FONT_SIZE: 10,
+            NOTES_TEXT_COLOR: [100, 100, 100],
+            NOTES_MAX_WIDTH: 170,
+            LOGO_X: 20,
+            LOGO_Y: 15,
+            LOGO_WIDTH: 40,
+            LOGO_HEIGHT: 20,
+            LOGO_OFFSET_Y: 25,
+            INVOICE_TITLE_FONT_SIZE: 22,
+            INVOICE_NO_FONT_SIZE: 12,
+            FROM_TO_LABEL_FONT_SIZE: 14,
+            FROM_TO_TEXT_FONT_SIZE: 12,
+            DATE_FONT_SIZE: 12,
+            DATE_X_RIGHT: 190
+        };
 
         // Download PDF
         function downloadPDF() {
@@ -1060,7 +1111,7 @@
                 var currencyDisplay = getCurrencyDisplay(invoiceData.currency);
 
                 doc.setFont("helvetica");
-                doc.setFontSize(12);
+                doc.setFontSize(PDF.INVOICE_NO_FONT_SIZE);
 
                 // Add logo if present
                 var logoOffset = 0;
@@ -1075,65 +1126,65 @@
                         } else if (invoiceData.logo.indexOf('data:image/webp') !== -1) {
                             logoFormat = 'WEBP';
                         }
-                        doc.addImage(invoiceData.logo, logoFormat, 20, 15, 40, 20);
-                        logoOffset = 25;
+                        doc.addImage(invoiceData.logo, logoFormat, PDF.LOGO_X, PDF.LOGO_Y, PDF.LOGO_WIDTH, PDF.LOGO_HEIGHT);
+                        logoOffset = PDF.LOGO_OFFSET_Y;
                     } catch (e) {
                         // If image format fails, skip logo
                     }
                 }
 
-                doc.setFontSize(22);
+                doc.setFontSize(PDF.INVOICE_TITLE_FONT_SIZE);
                 doc.setTextColor.apply(doc, headerColor);
-                doc.text("INVOICE", 20 + logoOffset, 20);
+                doc.text("INVOICE", PDF.MARGIN_LEFT + logoOffset, PDF.TOP_TITLE_Y);
 
                 doc.setTextColor(0, 0, 0);
-                doc.setFontSize(12);
-                doc.text("Invoice Number: " + invoiceData.invoiceNumber, 20, 35);
+                doc.setFontSize(PDF.INVOICE_NO_FONT_SIZE);
+                doc.text("Invoice Number: " + invoiceData.invoiceNumber, PDF.MARGIN_LEFT, PDF.INVOICE_NO_Y);
 
                 var dateText = "Date: " + invoiceData.date;
                 var dateWidth = doc.getTextWidth(dateText);
-                doc.text(dateText, 190 - dateWidth, 35);
+                doc.text(dateText, PDF.DATE_X_RIGHT - dateWidth, PDF.INVOICE_NO_Y);
 
-                var infoY = 45;
+                var infoY = PDF.INFO_START_Y;
                 if (invoiceData.dueDate) {
-                    doc.text("Due Date: " + invoiceData.dueDate, 20, infoY);
-                    infoY += 10;
+                    doc.text("Due Date: " + invoiceData.dueDate, PDF.MARGIN_LEFT, infoY);
+                    infoY += PDF.INFO_LINE_HEIGHT;
                 }
 
                 if (invoiceData.poNumber.trim()) {
-                    doc.text("PO Number: " + invoiceData.poNumber, 20, infoY);
-                    infoY += 10;
+                    doc.text("PO Number: " + invoiceData.poNumber, PDF.MARGIN_LEFT, infoY);
+                    infoY += PDF.INFO_LINE_HEIGHT;
                 }
 
                 if (invoiceData.taxDetail.trim()) {
-                    doc.text("Tax Detail: " + invoiceData.taxDetail, 20, infoY);
-                    infoY += 10;
+                    doc.text("Tax Detail: " + invoiceData.taxDetail, PDF.MARGIN_LEFT, infoY);
+                    infoY += PDF.INFO_LINE_HEIGHT;
                 }
 
-                doc.setFontSize(14);
+                doc.setFontSize(PDF.FROM_TO_LABEL_FONT_SIZE);
                 doc.setTextColor.apply(doc, headerColor);
-                doc.text("From:", 20, infoY + 10);
+                doc.text("From:", PDF.FROM_X, infoY + PDF.FROM_TO_LABEL_Y_OFFSET);
                 doc.setTextColor(0, 0, 0);
-                doc.setFontSize(12);
-                doc.text(invoiceData.sender.name, 20, infoY + 20);
-                var senderAddressLines = doc.splitTextToSize(invoiceData.sender.address, 80);
-                doc.text(senderAddressLines, 20, infoY + 30);
-                var senderAddressHeight = senderAddressLines.length * 5;
-                doc.text(invoiceData.sender.email, 20, infoY + 30 + senderAddressHeight);
+                doc.setFontSize(PDF.FROM_TO_TEXT_FONT_SIZE);
+                doc.text(invoiceData.sender.name, PDF.FROM_X, infoY + PDF.FROM_TO_NAME_Y_OFFSET);
+                var senderAddressLines = doc.splitTextToSize(invoiceData.sender.address, PDF.ADDR_WIDTH);
+                doc.text(senderAddressLines, PDF.FROM_X, infoY + PDF.FROM_TO_ADDR_Y_OFFSET);
+                var senderAddressHeight = senderAddressLines.length * PDF.ADDR_LINE_HEIGHT;
+                doc.text(invoiceData.sender.email, PDF.FROM_X, infoY + PDF.FROM_TO_ADDR_Y_OFFSET + senderAddressHeight);
 
-                doc.setFontSize(14);
+                doc.setFontSize(PDF.FROM_TO_LABEL_FONT_SIZE);
                 doc.setTextColor.apply(doc, headerColor);
-                doc.text("To:", 120, infoY + 10);
+                doc.text("To:", PDF.TO_X, infoY + PDF.FROM_TO_LABEL_Y_OFFSET);
                 doc.setTextColor(0, 0, 0);
-                doc.setFontSize(12);
-                doc.text(invoiceData.recipient.name, 120, infoY + 20);
-                var recipientAddressLines = doc.splitTextToSize(invoiceData.recipient.address, 80);
-                doc.text(recipientAddressLines, 120, infoY + 30);
-                var recipientAddressHeight = recipientAddressLines.length * 5;
-                doc.text(invoiceData.recipient.email, 120, infoY + 30 + recipientAddressHeight);
+                doc.setFontSize(PDF.FROM_TO_TEXT_FONT_SIZE);
+                doc.text(invoiceData.recipient.name, PDF.TO_X, infoY + PDF.FROM_TO_NAME_Y_OFFSET);
+                var recipientAddressLines = doc.splitTextToSize(invoiceData.recipient.address, PDF.ADDR_WIDTH);
+                doc.text(recipientAddressLines, PDF.TO_X, infoY + PDF.FROM_TO_ADDR_Y_OFFSET);
+                var recipientAddressHeight = recipientAddressLines.length * PDF.ADDR_LINE_HEIGHT;
+                doc.text(invoiceData.recipient.email, PDF.TO_X, infoY + PDF.FROM_TO_ADDR_Y_OFFSET + recipientAddressHeight);
 
-                var tableStartY = Math.max(110, infoY + 40 + Math.max(senderAddressHeight, recipientAddressHeight));
-                var adjustedTableStartY = tableStartY + 10;
+                var tableStartY = Math.max(PDF.TABLE_MIN_Y, infoY + PDF.TABLE_Y_OFFSET + Math.max(senderAddressHeight, recipientAddressHeight));
+                var adjustedTableStartY = tableStartY + PDF.TABLE_Y_OFFSET;
 
                 var headers = [["Description", "Quantity", "Rate", "Tax %", "Amount"]];
                 var rows = invoiceData.lineItems.map(function(item) {
@@ -1156,18 +1207,18 @@
                         textColor: [255, 255, 255]
                     },
                     styles: {
-                        cellPadding: 3,
-                        fontSize: 10
+                        cellPadding: PDF.TABLE_CELL_PADDING,
+                        fontSize: PDF.TABLE_FONT_SIZE
                     }
                 });
 
                 var finalY = (doc.lastAutoTable && doc.lastAutoTable.finalY) || adjustedTableStartY + 40;
                 doc.setTextColor(0, 0, 0);
-                doc.setFontSize(12);
+                doc.setFontSize(PDF.FROM_TO_TEXT_FONT_SIZE);
 
-                var labelX = 140;
-                var valueX = 190;
-                var lineHeight = 10;
+                var labelX = PDF.TOTALS_LABEL_X;
+                var valueX = PDF.TOTALS_VALUE_X;
+                var lineHeight = PDF.TOTALS_LINE_HEIGHT;
 
                 doc.text('Subtotal:', labelX, finalY + lineHeight);
                 var subtotalText = currencyDisplay + invoiceData.subtotal.toFixed(2);
@@ -1181,20 +1232,20 @@
                 var discountText = currencyDisplay + invoiceData.discount.toFixed(2);
                 doc.text(discountText, valueX - doc.getTextWidth(discountText), finalY + (lineHeight * 3));
 
-                doc.setFontSize(14);
+                doc.setFontSize(PDF.GRAND_TOTAL_FONT_SIZE);
                 doc.setTextColor.apply(doc, headerColor);
                 doc.text('Grand Total:', labelX, finalY + (lineHeight * 4));
                 var grandTotalText = currencyDisplay + invoiceData.grandTotal.toFixed(2);
                 doc.text(grandTotalText, valueX - doc.getTextWidth(grandTotalText), finalY + (lineHeight * 4));
 
                 if (invoiceData.notes.trim()) {
-                    var notesY = finalY + (lineHeight * 5) + 10;
-                    doc.setFontSize(10);
-                    doc.setTextColor(100, 100, 100);
-                    doc.text("Notes / Terms:", 20, notesY);
-                    doc.setFontSize(9);
-                    var notesLines = doc.splitTextToSize(invoiceData.notes, 170);
-                    doc.text(notesLines, 20, notesY + 6);
+                    var notesY = finalY + (lineHeight * 5) + PDF.NOTES_Y_OFFSET;
+                    doc.setFontSize(PDF.NOTES_LABEL_FONT_SIZE);
+                    doc.setTextColor.apply(doc, PDF.NOTES_TEXT_COLOR);
+                    doc.text("Notes / Terms:", PDF.MARGIN_LEFT, notesY);
+                    doc.setFontSize(PDF.NOTES_FONT_SIZE);
+                    var notesLines = doc.splitTextToSize(invoiceData.notes, PDF.NOTES_MAX_WIDTH);
+                    doc.text(notesLines, PDF.MARGIN_LEFT, notesY + PDF.NOTES_LINE_HEIGHT);
                 }
 
                 doc.save("invoice-" + invoiceData.invoiceNumber + ".pdf");
