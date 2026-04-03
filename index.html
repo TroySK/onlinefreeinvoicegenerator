@@ -8,6 +8,7 @@
     <meta name="keywords" content="online free invoice generator, free invoice, create invoice, invoice template, PDF invoice, business invoice, invoice maker, free invoice generator">
     <meta name="author" content="Online Free Invoice Generator">
     <link rel="canonical" href="https://onlinefreeinvoicegenerator.com">
+    <link rel="sitemap" href="/sitemap.xml" type="application/xml">
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://onlinefreeinvoicegenerator.com">
@@ -34,12 +35,21 @@
       "description": "Create professional invoices for free in seconds with Online Free Invoice Generator. No signup required. Generate, customize, and download PDF invoices instantly.",
       "url": "https://onlinefreeinvoicegenerator.com",
       "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "FinanceApplication",
       "operatingSystem": "Any",
       "offers": {
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "USD"
-      }
+      },
+      "featureList": [
+        "Multiple invoice templates",
+        "Multi-currency support",
+        "Tax and discount calculation",
+        "PDF download",
+        "No signup required",
+        "Dark and light mode"
+      ]
     }
     </script>
     
@@ -1033,7 +1043,7 @@
 
         @media (max-width: 768px) {
             .hero {
-                padding: 32px 0 24px;
+                padding: 24px 0 20px;
             }
 
             .hero h1 {
@@ -1208,15 +1218,6 @@
             }
         }
     </style>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0JC8ZK7W10"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-0JC8ZK7W10');
-    </script>
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -2683,7 +2684,7 @@
                 doc.text(taxText, valueX - doc.getTextWidth(taxText), finalY + (lineHeight * 2));
 
                 doc.text('Discount:', labelX, finalY + (lineHeight * 3));
-                var discountText = "-" + currencyDisplay + invoiceData.discount.toFixed(2);
+                var discountText = currencyDisplay + invoiceData.discount.toFixed(2);
                 doc.text(discountText, valueX - doc.getTextWidth(discountText), finalY + (lineHeight * 3));
 
                 doc.setFontSize(14);
@@ -2716,7 +2717,16 @@
                 console.error("Error generating PDF:", error);
                 downloadBtn.disabled = false;
                 downloadBtn.innerHTML = originalBtnHTML;
-                showToast("Error generating PDF. Please try again.", "error");
+
+                var errorMsg = "Error generating PDF.";
+                if (error.message && error.message.includes("autoTable")) {
+                    errorMsg = "Table plugin not loaded. Please refresh and try again.";
+                } else if (error.message && error.message.includes("jsPDF")) {
+                    errorMsg = "PDF library error. Please refresh the page.";
+                } else if (invoiceData.sender.name && invoiceData.recipient.name) {
+                    errorMsg = "Error generating PDF. Please check your inputs and try again.";
+                }
+                showToast(errorMsg, "error");
             }
         }
 
@@ -2744,5 +2754,13 @@
         });
     </script>
 </main>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0JC8ZK7W10"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0JC8ZK7W10');
+    </script>
 </body>
 </html>
