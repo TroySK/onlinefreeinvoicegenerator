@@ -905,30 +905,123 @@
         }
 
         /* Template Classes */
+
+        /* Modern: clean, rounded, indigo accents */
         .template-modern1 .line-items th {
             background: var(--bg-subtle);
             border-bottom-color: var(--border);
             color: var(--text-secondary);
+            border-radius: 0;
         }
 
-        .template-classic .line-items th {
-            background: #f3f4f6;
-            border-bottom-color: #1f2937;
-            color: #1f2937;
+        .template-modern1 .invoice-card {
+            border-top: 3px solid var(--primary);
         }
 
-        .template-business .line-items th {
-            background: #eff6ff;
-            border-bottom-color: #2563eb;
-            color: #2563eb;
-        }
-
+        /* Classic: serif font, dark borders, traditional */
         .template-classic {
             font-family: 'Times New Roman', Times, serif;
         }
 
+        .template-classic .invoice-card {
+            border: 2px solid #1f2937;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .template-classic .line-items {
+            border: 1px solid #1f2937;
+        }
+
+        .template-classic .line-items th {
+            background: #1f2937;
+            color: #ffffff;
+            border-bottom: 1px solid #1f2937;
+            font-family: 'Times New Roman', Times, serif;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .template-classic .line-items td {
+            border-bottom: 1px solid #d1d5db;
+        }
+
+        .template-classic .card-section-title {
+            font-family: 'Times New Roman', Times, serif;
+            text-transform: none;
+            letter-spacing: normal;
+            border-bottom: 1px solid #1f2937;
+            padding-bottom: 8px;
+        }
+
+        .template-classic .totals {
+            border: 1px solid #1f2937;
+            border-radius: 0;
+            background: #ffffff;
+        }
+
+        [data-theme="dark"] .template-classic .totals {
+            background: #1e293b;
+        }
+
+        /* Professional: blue accents, bold header block */
         .template-business {
             font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .template-business .invoice-card {
+            border: none;
+            border-left: 4px solid #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+        }
+
+        .template-business .line-items th {
+            background: #2563eb;
+            color: #ffffff;
+            border-bottom: 2px solid #1d4ed8;
+            font-weight: 700;
+        }
+
+        .template-business .line-items td {
+            border-bottom: 1px solid #dbeafe;
+        }
+
+        [data-theme="dark"] .template-business .line-items td {
+            border-bottom: 1px solid #1e3a5f;
+        }
+
+        .template-business .card-section-title {
+            color: #2563eb;
+        }
+
+        .template-business .totals {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+        }
+
+        [data-theme="dark"] .template-business .totals {
+            background: #1e3a5f;
+            border-color: #2563eb;
+        }
+
+        .template-business .add-item-btn {
+            color: #2563eb;
+            border-color: #93c5fd;
+        }
+
+        [data-theme="dark"] .template-business .add-item-btn {
+            color: #93c5fd;
+            border-color: #2563eb;
+        }
+
+        .template-business .add-item-btn:hover {
+            background: #dbeafe;
+            border-color: #2563eb;
+        }
+
+        [data-theme="dark"] .template-business .add-item-btn:hover {
+            background: #1e3a5f;
+            border-color: #60a5fa;
         }
 
         /* Responsive */
@@ -1409,14 +1502,26 @@
                             <div class="template-option">
                                 <input type="radio" id="template-modern1" name="template" value="modern1" checked>
                                 <label for="template-modern1">
-                                    <svg width="100" height="140" viewBox="0 0 100 140" role="img" aria-label="Modern Invoice Template Preview" aria-hidden="true">
-                                        <rect x="5" y="5" width="90" height="130" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
-                                        <rect x="10" y="15" width="80" height="15" rx="1" fill="#6366f1"/>
-                                        <rect x="10" y="40" width="35" height="8" rx="1" fill="#e2e8f0"/>
-                                        <rect x="50" y="40" width="35" height="8" rx="1" fill="#e2e8f0"/>
-                                        <rect x="10" y="55" width="80" height="40" rx="1" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="0.5"/>
-                                        <rect x="10" y="105" width="50" height="20" rx="1" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="0.5"/>
-                                        <rect x="65" y="105" width="25" height="20" rx="1" fill="#6366f1"/>
+                                    <svg width="120" height="168" viewBox="0 0 120 168" role="img" aria-label="Modern Invoice Template Preview" aria-hidden="true">
+                                        <rect x="4" y="4" width="112" height="160" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+                                        <rect x="4" y="4" width="112" height="3" rx="1" fill="#6366f1"/>
+                                        <rect x="12" y="16" width="40" height="10" rx="1" fill="#6366f1"/>
+                                        <rect x="12" y="34" width="40" height="4" rx="1" fill="#cbd5e1"/>
+                                        <rect x="12" y="42" width="30" height="4" rx="1" fill="#cbd5e1"/>
+                                        <rect x="70" y="34" width="38" height="4" rx="1" fill="#cbd5e1"/>
+                                        <rect x="70" y="42" width="38" height="4" rx="1" fill="#cbd5e1"/>
+                                        <rect x="12" y="56" width="96" height="4" rx="1" fill="#e2e8f0"/>
+                                        <rect x="12" y="64" width="96" height="2" rx="0.5" fill="#f1f5f9"/>
+                                        <rect x="12" y="70" width="96" height="2" rx="0.5" fill="#f1f5f9"/>
+                                        <rect x="12" y="76" width="96" height="2" rx="0.5" fill="#f1f5f9"/>
+                                        <rect x="12" y="82" width="96" height="2" rx="0.5" fill="#f1f5f9"/>
+                                        <rect x="12" y="94" width="50" height="4" rx="1" fill="#cbd5e1"/>
+                                        <rect x="12" y="102" width="50" height="4" rx="1" fill="#cbd5e1"/>
+                                        <rect x="12" y="110" width="50" height="4" rx="1" fill="#cbd5e1"/>
+                                        <rect x="75" y="110" width="33" height="4" rx="1" fill="#6366f1"/>
+                                        <rect x="75" y="118" width="33" height="4" rx="1" fill="#6366f1"/>
+                                        <rect x="75" y="126" width="33" height="4" rx="1" fill="#6366f1"/>
+                                        <rect x="75" y="134" width="33" height="8" rx="1" fill="#6366f1"/>
                                     </svg>
                                     <span>Modern</span>
                                 </label>
@@ -1424,14 +1529,26 @@
                             <div class="template-option">
                                 <input type="radio" id="template-classic" name="template" value="classic">
                                 <label for="template-classic">
-                                    <svg width="100" height="140" viewBox="0 0 100 140" role="img" aria-label="Classic Business Invoice Preview" aria-hidden="true">
-                                        <rect x="5" y="5" width="90" height="130" rx="0" fill="white" stroke="#0f172a" stroke-width="2"/>
-                                        <rect x="10" y="15" width="80" height="15" rx="0" fill="#0f172a"/>
-                                        <rect x="10" y="40" width="35" height="8" rx="0" fill="#e2e8f0"/>
-                                        <rect x="50" y="40" width="35" height="8" rx="0" fill="#e2e8f0"/>
-                                        <rect x="10" y="55" width="80" height="40" rx="0" fill="#f8fafc" stroke="#0f172a" stroke-width="1"/>
-                                        <rect x="10" y="105" width="50" height="20" rx="0" fill="#f8fafc" stroke="#0f172a" stroke-width="1"/>
-                                        <rect x="65" y="105" width="25" height="20" rx="0" fill="#0f172a"/>
+                                    <svg width="120" height="168" viewBox="0 0 120 168" role="img" aria-label="Classic Business Invoice Preview" aria-hidden="true">
+                                        <rect x="4" y="4" width="112" height="160" rx="0" fill="white" stroke="#0f172a" stroke-width="2"/>
+                                        <rect x="4" y="4" width="112" height="20" rx="0" fill="#0f172a"/>
+                                        <rect x="14" y="10" width="36" height="6" rx="0" fill="#ffffff"/>
+                                        <rect x="14" y="32" width="40" height="4" rx="0" fill="#94a3b8"/>
+                                        <rect x="14" y="40" width="30" height="4" rx="0" fill="#94a3b8"/>
+                                        <rect x="72" y="32" width="36" height="4" rx="0" fill="#94a3b8"/>
+                                        <rect x="72" y="40" width="36" height="4" rx="0" fill="#94a3b8"/>
+                                        <rect x="14" y="54" width="92" height="4" rx="0" fill="#0f172a"/>
+                                        <rect x="14" y="62" width="92" height="2" rx="0" fill="#f1f5f9"/>
+                                        <rect x="14" y="68" width="92" height="2" rx="0" fill="#f1f5f9"/>
+                                        <rect x="14" y="74" width="92" height="2" rx="0" fill="#f1f5f9"/>
+                                        <rect x="14" y="80" width="92" height="2" rx="0" fill="#f1f5f9"/>
+                                        <rect x="14" y="92" width="50" height="4" rx="0" fill="#94a3b8"/>
+                                        <rect x="14" y="100" width="50" height="4" rx="0" fill="#94a3b8"/>
+                                        <rect x="14" y="108" width="50" height="4" rx="0" fill="#94a3b8"/>
+                                        <rect x="76" y="108" width="32" height="4" rx="0" fill="#0f172a"/>
+                                        <rect x="76" y="116" width="32" height="4" rx="0" fill="#0f172a"/>
+                                        <rect x="76" y="124" width="32" height="4" rx="0" fill="#0f172a"/>
+                                        <rect x="76" y="132" width="32" height="8" rx="0" fill="#0f172a"/>
                                     </svg>
                                     <span>Classic</span>
                                 </label>
@@ -1439,14 +1556,26 @@
                             <div class="template-option">
                                 <input type="radio" id="template-business" name="template" value="business">
                                 <label for="template-business">
-                                    <svg width="100" height="140" viewBox="0 0 100 140" role="img" aria-label="Professional Business Invoice Preview" aria-hidden="true">
-                                        <rect x="5" y="5" width="90" height="130" rx="3" fill="white" stroke="#2563eb" stroke-width="1"/>
-                                        <rect x="10" y="15" width="80" height="15" rx="2" fill="#2563eb"/>
-                                        <rect x="10" y="40" width="35" height="8" rx="1" fill="#dbeafe"/>
-                                        <rect x="50" y="40" width="35" height="8" rx="1" fill="#dbeafe"/>
-                                        <rect x="10" y="55" width="80" height="40" rx="2" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.5"/>
-                                        <rect x="10" y="105" width="50" height="20" rx="2" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.5"/>
-                                        <rect x="65" y="105" width="25" height="20" rx="2" fill="#2563eb"/>
+                                    <svg width="120" height="168" viewBox="0 0 120 168" role="img" aria-label="Professional Business Invoice Preview" aria-hidden="true">
+                                        <rect x="4" y="4" width="112" height="160" rx="2" fill="white" stroke="#2563eb" stroke-width="1"/>
+                                        <rect x="4" y="4" width="4" height="160" rx="1" fill="#2563eb"/>
+                                        <rect x="16" y="12" width="40" height="10" rx="2" fill="#2563eb"/>
+                                        <rect x="16" y="30" width="40" height="4" rx="1" fill="#bfdbfe"/>
+                                        <rect x="16" y="38" width="30" height="4" rx="1" fill="#bfdbfe"/>
+                                        <rect x="74" y="30" width="34" height="4" rx="1" fill="#bfdbfe"/>
+                                        <rect x="74" y="38" width="34" height="4" rx="1" fill="#bfdbfe"/>
+                                        <rect x="16" y="52" width="92" height="4" rx="1" fill="#2563eb"/>
+                                        <rect x="16" y="60" width="92" height="2" rx="0.5" fill="#eff6ff"/>
+                                        <rect x="16" y="66" width="92" height="2" rx="0.5" fill="#eff6ff"/>
+                                        <rect x="16" y="72" width="92" height="2" rx="0.5" fill="#eff6ff"/>
+                                        <rect x="16" y="78" width="92" height="2" rx="0.5" fill="#eff6ff"/>
+                                        <rect x="16" y="90" width="50" height="4" rx="1" fill="#bfdbfe"/>
+                                        <rect x="16" y="98" width="50" height="4" rx="1" fill="#bfdbfe"/>
+                                        <rect x="16" y="106" width="50" height="4" rx="1" fill="#bfdbfe"/>
+                                        <rect x="77" y="106" width="31" height="4" rx="1" fill="#2563eb"/>
+                                        <rect x="77" y="114" width="31" height="4" rx="1" fill="#2563eb"/>
+                                        <rect x="77" y="122" width="31" height="4" rx="1" fill="#2563eb"/>
+                                        <rect x="77" y="130" width="31" height="8" rx="1" fill="#2563eb"/>
                                     </svg>
                                     <span>Professional</span>
                                 </label>
