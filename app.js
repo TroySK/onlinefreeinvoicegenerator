@@ -67,6 +67,18 @@
 
         // LocalStorage persistence
         const STORAGE_KEY = "invoice_data";
+        const COUNTER_KEY = "invoice_counter";
+
+        function getNextInvoiceNumber() {
+            try {
+                var counter = parseInt(localStorage.getItem(COUNTER_KEY)) || 0;
+                counter++;
+                localStorage.setItem(COUNTER_KEY, counter.toString());
+                return 'INV-' + counter.toString().padStart(6, '0');
+            } catch (e) {
+                return 'INV-' + Date.now().toString().slice(-6);
+            }
+        }
 
         function saveInvoiceData() {
             try {
@@ -89,7 +101,9 @@
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             } catch (e) {
-                // Silently fail if localStorage is unavailable
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    showToast('Storage full. Logo may not be saved. Consider using a smaller image.', 'error');
+                }
             }
         }
 
@@ -261,6 +275,7 @@
             if (!hasSavedData) {
                 var today = new Date().toISOString().split('T')[0];
                 invoiceData.date = today;
+                invoiceData.invoiceNumber = getNextInvoiceNumber();
             }
 
             // Set default template
@@ -348,6 +363,7 @@
                 else if (e.target.id === 'recipient-email') validateField('recipient', 'email', e.target.value);
                 else if (e.target.id === 'invoice-number') validateField('invoiceNumber', null, e.target.value);
                 else if (e.target.id === 'invoice-date') validateField('date', null, e.target.value);
+                else if (e.target.id === 'discount') calculateTotals();
                 saveInvoiceData();
             });
 
@@ -442,18 +458,29 @@
 
             document.getElementById('duplicate-btn').addEventListener('click', function() {
                 var today = new Date().toISOString().split('T')[0];
-                invoiceData.invoiceNumber = 'INV-' + Date.now().toString().slice(-6);
+                invoiceData.invoiceNumber = getNextInvoiceNumber();
                 invoiceData.date = today;
                 invoiceData.dueDate = '';
                 invoiceData.poNumber = '';
                 invoiceData.notes = '';
                 invoiceData.recipient = { name: '', address: '', email: '' };
+                invoiceData.lineItems = [
+                    {
+                        description: "",
+                        quantity: 0,
+                        rate: 0.0,
+                        tax: 0.0,
+                        amount: 0.0,
+                        taxAmount: 0.0
+                    }
+                ];
                 invoiceData.subtotal = 0;
                 invoiceData.totalTax = 0;
                 invoiceData.discount = 0;
                 invoiceData.grandTotal = 0;
 
                 syncToDOM();
+                calculateTotals();
 
                 ['recipient-name', 'recipient-email', 'invoice-number'].forEach(function(id) {
                     var el = document.getElementById(id);
@@ -816,9 +843,15 @@
             amountCell.textContent = item.amount.toFixed(2);
             
             // Update tax amount display
-            const taxAmountElement = document.getElementById(`tax-amount-${index}`);
+            var taxAmountElement = document.getElementById(`tax-amount-${index}`);
             if (taxAmountElement) {
-                taxAmountElement.textContent = `(${item.taxAmount.toFixed(2)})`;
+                if (item.taxAmount > 0) {
+                    taxAmountElement.textContent = `(${item.taxAmount.toFixed(2)})`;
+                    taxAmountElement.style.display = '';
+                } else {
+                    taxAmountElement.textContent = '';
+                    taxAmountElement.style.display = 'none';
+                }
             }
             
             calculateTotals();
@@ -920,6 +953,10 @@
 
         // Download PDF
         function downloadPDF() {
+            // Ensure totals are up to date (in case debounce hasn't fired)
+            syncFromDOM();
+            _calculateTotals();
+
             // Check if PDF library is loaded
             if (!window.jspdf) {
                 showToast("PDF library not loaded. Please refresh the page.", "error");
@@ -987,7 +1024,16 @@
                 var logoOffset = 0;
                 if (invoiceData.logo) {
                     try {
-                        doc.addImage(invoiceData.logo, 'PNG', 20, 15, 40, 20);
+                        // Detect image format from data URL
+                        var logoFormat = 'PNG';
+                        if (invoiceData.logo.indexOf('data:image/jpeg') !== -1 || invoiceData.logo.indexOf('data:image/jpg') !== -1) {
+                            logoFormat = 'JPEG';
+                        } else if (invoiceData.logo.indexOf('data:image/gif') !== -1) {
+                            logoFormat = 'GIF';
+                        } else if (invoiceData.logo.indexOf('data:image/webp') !== -1) {
+                            logoFormat = 'WEBP';
+                        }
+                        doc.addImage(invoiceData.logo, logoFormat, 20, 15, 40, 20);
                         logoOffset = 25;
                     } catch (e) {
                         // If image format fails, skip logo
