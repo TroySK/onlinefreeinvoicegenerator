@@ -1837,6 +1837,20 @@
                 invoiceData.discount = parseFloat(e.target.value) || 0;
                 calculateTotals();
             });
+
+            document.getElementById('discount').addEventListener('blur', (e) => {
+                var val = parseFloat(e.target.value);
+                if (!isNaN(val) && val > 0) {
+                    e.target.value = val.toFixed(2);
+                }
+            });
+
+            document.getElementById('discount').addEventListener('focus', (e) => {
+                var val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                    e.target.value = val;
+                }
+            });
             
             document.getElementById('tax-detail').addEventListener('input', (e) => {
                 invoiceData.taxDetail = e.target.value;
@@ -2207,6 +2221,20 @@
                 if (e.key === 'Tab' && !e.shiftKey) {
                     e.preventDefault();
                     row.querySelector('.item-tax').focus();
+                }
+            });
+
+            rateInput.addEventListener('blur', (e) => {
+                var val = parseFloat(e.target.value);
+                if (!isNaN(val) && val > 0) {
+                    e.target.value = val.toFixed(2);
+                }
+            });
+
+            rateInput.addEventListener('focus', (e) => {
+                var val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                    e.target.value = val;
                 }
             });
 
