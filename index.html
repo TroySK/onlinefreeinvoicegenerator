@@ -1148,12 +1148,12 @@
                         <table class="line-items" id="line-items">
                             <thead>
                                 <tr>
-                                    <th>Description</th>
-                                    <th>Quantity</th>
-                                    <th>Rate</th>
-                                    <th>Tax (%)</th>
-                                    <th>Amount</th>
-                                    <th class="actions-col"></th>
+                                    <th scope="col">Description</th>
+                                    <th scope="col">Quantity</th>
+                                    <th scope="col">Rate</th>
+                                    <th scope="col">Tax (%)</th>
+                                    <th scope="col">Amount</th>
+                                    <th scope="col" class="actions-col"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1218,7 +1218,7 @@
                             <div class="template-option">
                                 <input type="radio" id="template-modern1" name="template" value="modern1" checked>
                                 <label for="template-modern1">
-                                    <svg width="100" height="140" viewBox="0 0 100 140" aria-label="Modern Invoice Template Preview">
+                                    <svg width="100" height="140" viewBox="0 0 100 140" role="img" aria-label="Modern Invoice Template Preview">
                                         <rect x="5" y="5" width="90" height="130" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
                                         <rect x="10" y="15" width="80" height="15" rx="1" fill="#6366f1"/>
                                         <rect x="10" y="40" width="35" height="8" rx="1" fill="#e2e8f0"/>
@@ -1233,7 +1233,7 @@
                             <div class="template-option">
                                 <input type="radio" id="template-classic" name="template" value="classic">
                                 <label for="template-classic">
-                                    <svg width="100" height="140" viewBox="0 0 100 140" aria-label="Classic Business Invoice Preview">
+                                    <svg width="100" height="140" viewBox="0 0 100 140" role="img" aria-label="Classic Business Invoice Preview">
                                         <rect x="5" y="5" width="90" height="130" rx="0" fill="white" stroke="#0f172a" stroke-width="2"/>
                                         <rect x="10" y="15" width="80" height="15" rx="0" fill="#0f172a"/>
                                         <rect x="10" y="40" width="35" height="8" rx="0" fill="#e2e8f0"/>
@@ -1248,7 +1248,7 @@
                             <div class="template-option">
                                 <input type="radio" id="template-business" name="template" value="business">
                                 <label for="template-business">
-                                    <svg width="100" height="140" viewBox="0 0 100 140" aria-label="Professional Business Invoice Preview">
+                                    <svg width="100" height="140" viewBox="0 0 100 140" role="img" aria-label="Professional Business Invoice Preview">
                                         <rect x="5" y="5" width="90" height="130" rx="3" fill="white" stroke="#2563eb" stroke-width="1"/>
                                         <rect x="10" y="15" width="80" height="15" rx="2" fill="#2563eb"/>
                                         <rect x="10" y="40" width="35" height="8" rx="1" fill="#dbeafe"/>
@@ -1685,15 +1685,24 @@
 
         // Update error display
         function updateErrorDisplay(errorElementId, errorMessage, inputElementId) {
-            const errorElement = document.getElementById(errorElementId);
-            const inputElement = document.getElementById(inputElementId);
-            
-            if (errorMessage) {
+            var errorElement = document.getElementById(errorElementId);
+            var inputElement = document.getElementById(inputElementId);
+
+            if (errorElement) {
                 errorElement.textContent = errorMessage;
-                inputElement.classList.add('invalid');
-            } else {
-                errorElement.textContent = "";
-                inputElement.classList.remove('invalid');
+                errorElement.setAttribute('aria-live', 'polite');
+            }
+
+            if (inputElement) {
+                if (errorMessage) {
+                    inputElement.classList.add('invalid');
+                    inputElement.setAttribute('aria-describedby', errorElementId);
+                    inputElement.setAttribute('aria-invalid', 'true');
+                } else {
+                    inputElement.classList.remove('invalid');
+                    inputElement.removeAttribute('aria-describedby');
+                    inputElement.removeAttribute('aria-invalid');
+                }
             }
         }
 
