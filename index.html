@@ -1475,6 +1475,16 @@
                         </svg>
                         Duplicate
                     </button>
+                    <button id="share-btn" class="btn btn-primary" style="background: var(--bg-subtle); color: var(--text-secondary);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                            <circle cx="18" cy="5" r="3"></circle>
+                            <circle cx="6" cy="12" r="3"></circle>
+                            <circle cx="18" cy="19" r="3"></circle>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                        </svg>
+                        Share
+                    </button>
                 </div>
             </div>
         </div>
@@ -1932,6 +1942,26 @@
 
                 saveInvoiceData();
                 showToast('Invoice duplicated. Update recipient and download.', 'success');
+            });
+
+            document.getElementById('share-btn').addEventListener('click', function() {
+                var subject = 'Invoice ' + invoiceData.invoiceNumber;
+                var body = 'Please find invoice ' + invoiceData.invoiceNumber + ' dated ' + invoiceData.date + '.\n\n';
+                body += 'Amount Due: ' + getCurrencyDisplay(invoiceData.currency) + invoiceData.grandTotal.toFixed(2) + '\n\n';
+                if (invoiceData.sender.name) body += 'From: ' + invoiceData.sender.name + '\n';
+                if (invoiceData.recipient.name) body += 'To: ' + invoiceData.recipient.name + '\n';
+
+                if (navigator.share) {
+                    navigator.share({
+                        title: subject,
+                        text: body
+                    }).catch(function() {});
+                } else {
+                    var mailtoLink = 'mailto:' + encodeURIComponent(invoiceData.recipient.email || '') +
+                        '?subject=' + encodeURIComponent(subject) +
+                        '&body=' + encodeURIComponent(body);
+                    window.location.href = mailtoLink;
+                }
             });
             
             // Add template selection event listeners
