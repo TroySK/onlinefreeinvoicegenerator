@@ -1835,17 +1835,33 @@
 
         // Calculate invoice totals
         function calculateTotals() {
-            // Calculate subtotal
-            invoiceData.subtotal = invoiceData.lineItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
-            
-            // Calculate total tax
-            invoiceData.totalTax = invoiceData.lineItems.reduce((sum, item) => {
-                return sum + (item.quantity * item.rate * item.tax / 100);
-            }, 0);
-            
-            // Calculate grand total
-            invoiceData.grandTotal = invoiceData.subtotal + invoiceData.totalTax - invoiceData.discount;
-            
+            // Calculate subtotal with proper rounding
+            invoiceData.subtotal = parseFloat(
+                invoiceData.lineItems.reduce(function(sum, item) {
+                    return sum + parseFloat((item.quantity * item.rate).toFixed(2));
+                }, 0).toFixed(2)
+            );
+
+            // Calculate total tax with proper rounding
+            invoiceData.totalTax = parseFloat(
+                invoiceData.lineItems.reduce(function(sum, item) {
+                    return sum + parseFloat((item.quantity * item.rate * item.tax / 100).toFixed(2));
+                }, 0).toFixed(2)
+            );
+
+            // Clamp discount to prevent negative grand total
+            invoiceData.discount = Math.max(0, invoiceData.discount);
+            var maxDiscount = invoiceData.subtotal + invoiceData.totalTax;
+            if (invoiceData.discount > maxDiscount) {
+                invoiceData.discount = maxDiscount;
+                document.getElementById('discount').value = maxDiscount.toFixed(2);
+            }
+
+            // Calculate grand total (never negative)
+            invoiceData.grandTotal = parseFloat(
+                Math.max(0, invoiceData.subtotal + invoiceData.totalTax - invoiceData.discount).toFixed(2)
+            );
+
             // Update UI
             updateCurrencyDisplay();
             saveInvoiceData();
