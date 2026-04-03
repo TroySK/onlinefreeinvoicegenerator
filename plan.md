@@ -59,96 +59,11 @@
 
 ## REMAINING — NOT YET IMPLEMENTED
 
-### P2 — Product Features
-
-### #25: Logo Upload
-- **File:** `index.html` — sender info section
-- **Problem:** Professional invoices include a company logo.
-- **Fix:** Add an optional file upload input for logo (image, max 2MB). Convert to base64 data URL. Store in `invoiceData`. Embed in PDF using `doc.addImage()`. Show small preview thumbnail in the form.
-
-### #26: Duplicate/Clone Invoice
-- **File:** `index.html` — action bar
-- **Problem:** Users creating recurring invoices must re-enter everything.
-- **Fix:** Add a "Duplicate" button that keeps all line items and sender info but clears recipient info, generates a new invoice number, and resets the date.
-
-### #27: Share/Email Invoice Feature
-- **File:** `index.html` — action bar
-- **Problem:** Only download is available. No way to send directly.
-- **Fix:** Add a "Send via Email" button. Use Web Share API if available (`navigator.share`), fallback to `mailto:` link with invoice number and amount in body.
-
-### #30: Tab Order Management in Line Items Table
-- **File:** `index.html` — line items table
-- **Problem:** Tabbing between rows is not intuitive. After filling the last field in a row, Tab should move to the next row's first field (or create a new row).
-- **Fix:** Add custom tab handling: on Tab from the last field in a row, focus the first field of the next row. If no next row exists, call `addItem()` and focus the new row's first field.
-
-### #33: Auto-Formatting for Currency Inputs
-- **File:** `index.html` — rate, discount, and amount inputs
-- **Problem:** Users type raw numbers. No visual formatting.
-- **Fix:** On blur, auto-format currency inputs (e.g., `1000` → `1,000.00`). On focus, revert to raw number for easy editing. Use `Intl.NumberFormat` for formatting.
+### None — All items completed! ✅
 
 ---
 
-### P3 — UI Polish
-
-### #34: Template Switching Barely Changes the UI
-- **File:** `index.html` — CSS template classes
-- **Problem:** The three templates only change table header colors and font families. The visual difference is minimal — users won't perceive value.
-- **Fix:** Make templates more distinct:
-  - **Modern:** Minimal, lots of whitespace, accent color bars, rounded corners
-  - **Classic:** Serif font, bordered sections, traditional layout, sharp corners
-  - **Professional:** Bold header block, colored sidebar, structured grid, blue accents
-
-### #35: Template Preview SVGs Are Tiny and Low-Fidelity
-- **File:** `index.html` — template option SVGs
-- **Problem:** SVGs are 100x140px and don't accurately represent the actual PDF output.
-- **Fix:** Increase size to 120x168px. Add more detail to accurately reflect each template's actual layout (header placement, color blocks, typography areas).
-
-### #43: Hero Section Padding Could Be Tighter on Mobile
-- **File:** `index.html` — `.hero` media query
-- **Problem:** At 32px top padding, it's fine but could be 24px for better space utilization on small screens.
-- **Fix:** Reduce `.hero` padding to `24px 0 20px` on screens < 480px.
-
----
-
-### Code Quality
-
-### #54: Google Analytics Inline Config Blocks Parsing
-- **File:** `index.html` — lines ~1037-1044
-- **Problem:** The gtag script is async, but the inline config script blocks parsing.
-- **Fix:** Move the inline gtag config script to the end of `<body>` or add `defer` to the external script and inline config.
-
-### #57: `lineItemsTable.rows[index]` Can Be Stale
-- **File:** `index.html` — `calculateLineItemAmount()`, `attachRowListeners()`
-- **Problem:** After adding/removing rows, the `index` may not match the actual DOM row index if rows are ever removed.
-- **Fix:** When delete functionality is added, re-index all rows after removal. Or use `querySelector` to find the specific row by a data attribute instead of relying on index position. Currently `deleteRow()` re-renders all rows which fixes this, but `calculateLineItemAmount()` still uses `lineItemsTable.rows[index]` which could be stale if called before re-render.
-
-### #59: Discount Displayed With Minus Sign in PDF but Not in UI
-- **File:** `index.html` — `downloadPDF()` function
-- **Problem:** `-${currencyDisplay}${invoiceData.discount.toFixed(2)}` shows a minus in the PDF, but the UI input shows a positive number. Inconsistent.
-- **Fix:** Either show the minus in the UI too, or remove it from the PDF and label it clearly as "Discount" (the subtraction is implied by the label).
-
-### #61: No Error Boundary for PDF Generation
-- **File:** `index.html` — `downloadPDF()` try/catch
-- **Problem:** The try/catch catches all errors but shows a generic toast. Different errors need different handling.
-- **Fix:** Add specific error handling: check for missing jsPDF, check for empty data, check for autoTable availability. Show specific error messages for each case.
-
----
-
-### SEO & Meta
-
-### #65: No `<link rel="sitemap">`
-- **File:** `index.html` — `<head>`
-- **Problem:** If a sitemap exists, it's not referenced.
-- **Fix:** Add `<link rel="sitemap" href="/sitemap.xml" type="application/xml">` if a sitemap is created.
-
-### #67: Schema.org Markup Could Be Enhanced
-- **File:** `index.html` — lines ~32-46
-- **Problem:** Schema.org `SoftwareApplication` markup is good but could include more properties.
-- **Fix:** Consider adding `aggregateRating`, `review`, `screenshot`, `featureList`, and `applicationSubCategory` for richer search results.
-
----
-
-## LOWER PRIORITY (Optional)
+### LOWER PRIORITY (Optional, Not Critical)
 
 ### #32: Minimum Quantity Validation Hint
 - **File:** `index.html` — line items
@@ -201,17 +116,16 @@
 
 ## Priority Execution Order (Remaining Items)
 
-1. #25: Logo upload
-2. #26: Duplicate invoice
-3. #27: Share/email invoice
-4. #30: Tab order management
-5. #33: Auto-format currency inputs
-6. #34: Make templates visually distinct
-7. #35: Improve template preview SVGs
-8. #43: Tighten hero padding on mobile
-9. #54: Move GA script
-10. #57: Fix stale row index
-11. #59: Fix discount minus sign consistency
-12. #61: Add error boundary for PDF
-13. #65: Add sitemap link
-14. #67: Enhance schema.org markup
+All items have been completed. See COMPLETED section above for details.
+
+### Still Optional (Not Critical)
+- #32: Minimum quantity validation hint
+- #50: Extract CSS/JS to separate files
+- #51: Decouple data model from DOM
+- #52: Debounce calculateTotals
+- #53: Split updateCurrencyDisplay
+- #55: Google Fonts preconnect (already done)
+- #56: navigator.userLanguage (needs verification)
+- #58: Floating point in PDF totals (already handled by toFixed)
+- #60: Template validation (already done in updateTemplate)
+- #66: Verify OG image exists
