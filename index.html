@@ -554,6 +554,42 @@
             color: var(--text-primary);
         }
 
+        /* Delete Row Button */
+        .delete-row-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            transition: color 0.15s ease, background-color 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-row-btn:hover {
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .delete-row-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .delete-row-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .actions-col {
+            width: 40px;
+            padding: 12px 8px !important;
+            text-align: center;
+        }
+
         /* Action Bar */
         .action-bar {
             background: var(--bg-surface);
@@ -1052,6 +1088,7 @@
                                     <th>Rate</th>
                                     <th>Tax (%)</th>
                                     <th>Amount</th>
+                                    <th class="actions-col"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1064,6 +1101,14 @@
                                         <div class="tax-amount" id="tax-amount-0"></div>
                                     </td>
                                     <td data-label="Amount" class="item-amount">0.00</td>
+                                    <td data-label="Actions" class="actions-col">
+                                        <button type="button" class="delete-row-btn" aria-label="Remove line item" disabled>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1424,49 +1469,8 @@
                 });
             });
             
-            // Add event listener to the first row
-            const firstRow = lineItemsTable.rows[0];
-            const firstDescriptionInput = firstRow.querySelector('.item-description');
-            const firstQuantityInput = firstRow.querySelector('.item-quantity');
-            const firstRateInput = firstRow.querySelector('.item-rate');
-            const firstTaxInput = firstRow.querySelector('.item-tax');
-            
-            firstDescriptionInput.addEventListener('input', (e) => {
-                invoiceData.lineItems[0].description = e.target.value;
-            });
-            
-            firstQuantityInput.addEventListener('input', (e) => {
-                const value = parseFloat(e.target.value) || 0;
-                invoiceData.lineItems[0].quantity = value;
-                if (value < 0) {
-                    e.target.classList.add('invalid');
-                } else {
-                    e.target.classList.remove('invalid');
-                }
-                calculateLineItemAmount(0);
-            });
-            
-            firstRateInput.addEventListener('input', (e) => {
-                const value = parseFloat(e.target.value) || 0;
-                invoiceData.lineItems[0].rate = value;
-                if (value < 0) {
-                    e.target.classList.add('invalid');
-                } else {
-                    e.target.classList.remove('invalid');
-                }
-                calculateLineItemAmount(0);
-            });
-            
-            firstTaxInput.addEventListener('input', (e) => {
-                const value = parseFloat(e.target.value) || 0;
-                invoiceData.lineItems[0].tax = Math.max(0, Math.min(100, value)); // Clamp between 0 and 100
-                if (value < 0 || value > 100) {
-                    e.target.classList.add('invalid');
-                } else {
-                    e.target.classList.remove('invalid');
-                }
-                calculateLineItemAmount(0);
-            });
+            // Add event listeners to the first row
+            attachRowListeners(lineItemsTable.rows[0], 0);
             
             // Initialize with one line item
             calculateLineItemAmount(0);
@@ -1570,6 +1574,14 @@
                     <div class="tax-amount" id="tax-amount-${index}"></div>
                 </td>
                 <td data-label="Amount" class="item-amount">0.00</td>
+                <td data-label="Actions" class="actions-col">
+                    <button type="button" class="delete-row-btn" aria-label="Remove line item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </td>
             `;
             
             // Add event listeners to the new row
@@ -1577,6 +1589,7 @@
             const quantityInput = newRow.querySelector('.item-quantity');
             const rateInput = newRow.querySelector('.item-rate');
             const taxInput = newRow.querySelector('.item-tax');
+            const deleteBtn = newRow.querySelector('.delete-row-btn');
             
             // Add to invoice data
             invoiceData.lineItems.push({
@@ -1587,11 +1600,63 @@
                 amount: 0.0,
                 taxAmount: 0.0
             });
-            
+
+            attachRowListeners(newRow, index);
+            updateDeleteButtons();
+        }
+
+        // Delete a line item row
+        function deleteRow(index) {
+            if (invoiceData.lineItems.length <= 1) return;
+
+            invoiceData.lineItems.splice(index, 1);
+            lineItemsTable.deleteRow(index);
+
+            // Re-render all rows to fix indices
+            while (lineItemsTable.rows.length > 0) {
+                lineItemsTable.deleteRow(0);
+            }
+
+            invoiceData.lineItems.forEach((item, i) => {
+                const row = lineItemsTable.insertRow();
+                row.innerHTML = `
+                    <td data-label="Description"><textarea class="item-description" placeholder="Item description">${item.description}</textarea></td>
+                    <td data-label="Quantity"><input type="number" class="item-quantity" placeholder="0" min="0" step="1" value="${item.quantity || ''}"></td>
+                    <td data-label="Rate"><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01" value="${item.rate || ''}"></td>
+                    <td data-label="Tax (%)" class="tax-cell">
+                        <input type="number" class="item-tax" placeholder="0" min="0" max="100" step="0.1" value="${item.tax || ''}">
+                        <div class="tax-amount" id="tax-amount-${i}"></div>
+                    </td>
+                    <td data-label="Amount" class="item-amount">${item.amount.toFixed(2)}</td>
+                    <td data-label="Actions" class="actions-col">
+                        <button type="button" class="delete-row-btn" aria-label="Remove line item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </td>
+                `;
+
+                attachRowListeners(row, i);
+            });
+
+            updateDeleteButtons();
+            calculateTotals();
+        }
+
+        // Attach event listeners to a row
+        function attachRowListeners(row, index) {
+            const descriptionInput = row.querySelector('.item-description');
+            const quantityInput = row.querySelector('.item-quantity');
+            const rateInput = row.querySelector('.item-rate');
+            const taxInput = row.querySelector('.item-tax');
+            const deleteBtn = row.querySelector('.delete-row-btn');
+
             descriptionInput.addEventListener('input', (e) => {
                 invoiceData.lineItems[index].description = e.target.value;
             });
-            
+
             quantityInput.addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value) || 0;
                 invoiceData.lineItems[index].quantity = value;
@@ -1602,7 +1667,7 @@
                 }
                 calculateLineItemAmount(index);
             });
-            
+
             rateInput.addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value) || 0;
                 invoiceData.lineItems[index].rate = value;
@@ -1613,16 +1678,26 @@
                 }
                 calculateLineItemAmount(index);
             });
-            
+
             taxInput.addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value) || 0;
-                invoiceData.lineItems[index].tax = Math.max(0, Math.min(100, value)); // Clamp between 0 and 100
+                invoiceData.lineItems[index].tax = Math.max(0, Math.min(100, value));
                 if (value < 0 || value > 100) {
                     e.target.classList.add('invalid');
                 } else {
                     e.target.classList.remove('invalid');
                 }
                 calculateLineItemAmount(index);
+            });
+
+            deleteBtn.addEventListener('click', () => deleteRow(index));
+        }
+
+        // Update delete button disabled states
+        function updateDeleteButtons() {
+            const buttons = lineItemsTable.querySelectorAll('.delete-row-btn');
+            buttons.forEach(btn => {
+                btn.disabled = invoiceData.lineItems.length <= 1;
             });
         }
 
