@@ -95,7 +95,7 @@
 - ✅ #70: **Discount input doesn't trigger recalculation** — Fixed by adding `calculateTotals()` call on discount `input` event, plus `_calculateTotals()` sync call at start of `downloadPDF()`.
 - ✅ #71: **Tax amount display shows `(0.00)` even when no tax** — Fixed by hiding tax amount element when `taxAmount === 0`.
 - ✅ #72: **PDF logo embedding assumes PNG format** — Fixed by detecting image format from data URL prefix (`data:image/jpeg`, `data:image/gif`, `data:image/webp`).
-- [ ] #73: **Duplicate invoice number collision risk** — Uses `Date.now().toString().slice(-6)` which could collide. Should use incrementing counter or full timestamp.
+- ✅ #73/#98: **Invoice number collision risk** — Fixed with localStorage-based incrementing counter (`INV-000001`, `INV-000002`, etc.).
 
 ### P2 — Product Features
 - [ ] #74: **No "Paid/Unpaid/Overdue" status indicator** — Professional invoices typically show a payment status badge. Could add a status dropdown (Paid, Unpaid, Overdue) that renders as a stamp/watermark on the PDF.
@@ -106,44 +106,38 @@
 
 ### P3 — UI Polish
 - ✅ #79/#99: **Classic template dark mode** — Verified working. The selector `[data-theme="dark"] .template-classic .totals` has higher specificity (0-2-1) than `.template-classic .totals` (0-2-0) and correctly overrides the white background in dark mode.
-- [ ] #80: ~~**Empty line items with 0.00 amounts look cluttered**~~ — Fixed with `.empty-row` class (opacity 0.45, dashed borders).
-- [ ] #81: ~~**No visual feedback when localStorage saves**~~ — Fixed with "✓ Saved" indicator in navbar.
+- ✅ #80: **Empty line items with 0.00 amounts look cluttered** — Fixed with `.empty-row` class (opacity 0.45, dashed borders).
+- ✅ #81/#100: **No visual feedback when localStorage saves** — Fixed with "✓ Saved" indicator in navbar.
 - [ ] #82: **Currency selector is very long (30+ options)** — On mobile, the dropdown is unwieldy. Could group by region or add a search/filter within the dropdown.
-- [ ] #83: ~~**Tax amount `(0.00)` overlaps with input on narrow screens**~~ — Fixed by hiding tax amount when 0 (#93).
+- ✅ #83/#93/#96: **Tax amount `(0.00)` overlaps with input on narrow screens** — Fixed by hiding tax amount when 0.
 
 ### Code Quality
 - [ ] #84: **`calculateLineItemAmount` directly accesses DOM** — Should use the data model and let `syncToDOM` handle updates, rather than directly manipulating `lineItemsTable.rows[index].cells[4]`.
-- [ ] #85: ~~**Magic numbers in PDF generation**~~ — Fixed by extracting to `PDF` constants object.
-- [ ] #86: **`syncToDOM` rebuilds all line items from scratch** — This is inefficient and loses focus state. If a user is editing a field and `syncToDOM` is called (e.g., after loading saved data), they lose their cursor position. Should diff and update rather than rebuild.
-- [ ] #87: **No error handling for `localStorage` quota exceeded** — If logo is large (near 2MB), base64 encoding could exceed localStorage quota (typically 5-10MB). The `saveInvoiceData` try/catch silently fails, but user has no indication their data wasn't saved.
+- ✅ #85: **Magic numbers in PDF generation** — Fixed by extracting to `PDF` constants object.
+- ✅ #86: **`syncToDOM` rebuilds all line items from scratch** — Fixed with diff-and-update approach that preserves focus state.
+- ✅ #87/#97: **No error handling for `localStorage` quota exceeded** — Fixed by catching `QuotaExceededError` and showing toast notification.
 
 ### UX Enhancements
-- [ ] #88: **Auto-set due date based on common terms** — Could add a quick-select dropdown for due date (Net 15, Net 30, Net 60, Upon Receipt) that auto-calculates from invoice date.
+- ✅ #88: **Auto-set due date based on common terms** — Added quick-select dropdown (Upon Receipt, Net 7/14/15/30/45/60/90).
 - [ ] #89: **Bulk actions for line items** — No way to delete all empty line items at once, or duplicate a line item.
 - [ ] #90: **Invoice history** — Could store multiple invoices in localStorage and allow switching between them.
-- [ ] #91: **Print-friendly CSS** — The `@media print` styles hide navbar and action bar, but the form inputs still look like inputs when printed. Could add print-specific styling to make the form look like a rendered invoice.
+- ✅ #91: **Print-friendly CSS** — Fixed with print-specific styles that make inputs look like rendered text, hide interactive elements, and add page break protection.
 
 ### Additional Issues from Browser Testing
 - ✅ #92: **Duplicate invoice doesn't clear line items** — Fixed by resetting `lineItems` to single empty row.
-- ✅ #93: **Tax amount `(0.00)` always visible** — Fixed by hiding element when tax amount is 0.
 - ✅ #94: **Discount not recalculated before PDF download** — Fixed by adding `_calculateTotals()` at start of `downloadPDF()` and `calculateTotals()` on discount input event.
 - ✅ #95: **PDF logo format hardcoded to PNG** — Fixed by detecting format from data URL prefix.
-- [ ] #96: **Mobile: tax amount text overlaps on narrow screens** — At 375px width, the `(0.00)` tax amount text renders below the tax input but can cause layout shift or overlap in the responsive card layout. (Mitigated by #93 fix — tax amount is now hidden when 0.)
-- ✅ #97: **No localStorage quota error handling** — Fixed by catching `QuotaExceededError` and showing toast notification.
-- [ ] #98: **Duplicate invoice number collision risk** — `Date.now().toString().slice(-6)` can produce same last 6 digits if duplicated within same millisecond or by coincidence. Should use incrementing counter or full timestamp.
-- [ ] #99: **Classic template dark mode incomplete** — `.template-classic .totals` sets `background: #ffffff` but dark mode override only applies when `.template-classic` is on body, not when it's on `#invoice-container`. Need to verify selector specificity.
-- [ ] #100: **No "saved" indicator** — Users have no visual feedback that auto-save is working. A subtle "✓ Saved" near the header would improve confidence.
-- [ ] #101: ~~**Second line item amount shows 0.00 after entry**~~ — Verified working in browser test. The amount was 0.00 because quantity was empty (defaults to 0). Once quantity was filled (2), amount correctly calculated as 151.00 (2 × 75.50). Subtotal also updated correctly to $651.00. Issue resolved — was user input sequence, not a bug.
-- ✅ #102: **Empty rows persist after duplicate** — Fixed by resetting `lineItems` to single empty row in duplicate handler.
-- ✅ #103: **Discount input shows raw value after clamp** — Already fixed by adding `calculateTotals()` to discount input event. Browser test confirmed: entering `99999` clamped to `500.00` and displayed correctly.
+- ✅ #101: ~~**Second line item amount shows 0.00 after entry**~~ — Verified working. Amount was 0.00 because quantity was empty. Once filled, calculated correctly.
+- ✅ #102: **Empty rows persist after duplicate** — Fixed by resetting `lineItems` to single empty row.
+- ✅ #103: **Discount input shows raw value after clamp** — Already fixed by adding `calculateTotals()` to discount input event.
 
 ---
 
 ## File Structure
 
 ```
-index.html     (473 lines — HTML only)
-styles.css     (1165 lines — all styles)
-app.js         (1155 lines — all JavaScript)
+index.html     (487 lines — HTML only)
+styles.css     (1271 lines — all styles)
+app.js         (1299 lines — all JavaScript)
 plan.md        (this file)
 ```
