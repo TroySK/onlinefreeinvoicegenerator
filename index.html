@@ -618,6 +618,87 @@
             text-align: center;
         }
 
+        /* Logo Upload */
+        .logo-upload {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 16px;
+        }
+
+        .logo-upload-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .logo-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .logo-upload-area:hover {
+            border-color: var(--primary);
+        }
+
+        #logo-input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .logo-upload-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .logo-upload-placeholder span {
+            font-size: 0.8125rem;
+        }
+
+        .logo-preview {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .logo-preview img {
+            max-width: 120px;
+            max-height: 60px;
+            object-fit: contain;
+            border-radius: var(--radius-sm);
+        }
+
+        .logo-remove-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .logo-remove-btn:hover {
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
         /* Toast Notification */
         .toast {
             position: fixed;
@@ -1293,9 +1374,32 @@
                     <div class="form-group">
                         <label for="notes">Notes / Payment Terms</label>
                         <textarea id="notes" placeholder="Payment is due within 30 days. Thank you for your business!" style="min-height: 100px;"></textarea>
+                        </div>
+                    </div>
+                    <div class="logo-upload">
+                        <span class="logo-upload-label">Company Logo (optional)</span>
+                        <div class="logo-upload-area" id="logo-upload-area">
+                            <input type="file" id="logo-input" accept="image/png,image/jpeg,image/gif,image/webp">
+                            <div class="logo-upload-placeholder" id="logo-placeholder">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                <span>Click to upload logo (PNG, JPG, GIF, WebP — max 2MB)</span>
+                            </div>
+                            <div class="logo-preview" id="logo-preview" style="display: none;">
+                                <img id="logo-preview-img" alt="Company logo preview">
+                                <button type="button" class="logo-remove-btn" id="logo-remove-btn" aria-label="Remove logo">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
             <div class="action-bar">
                 <div class="action-bar-inner">
@@ -1379,6 +1483,7 @@
             taxDetail: "",
             poNumber: "",
             notes: "",
+            logo: "",
             sender: {
                 name: "",
                 address: "",
@@ -1449,6 +1554,7 @@
                     taxDetail: invoiceData.taxDetail,
                     poNumber: invoiceData.poNumber,
                     notes: invoiceData.notes,
+                    logo: invoiceData.logo,
                     sender: { ...invoiceData.sender },
                     recipient: { ...invoiceData.recipient },
                     lineItems: invoiceData.lineItems.map(function(item) {
@@ -1476,6 +1582,7 @@
                 if (data.taxDetail) invoiceData.taxDetail = data.taxDetail;
                 if (data.poNumber) invoiceData.poNumber = data.poNumber;
                 if (data.notes) invoiceData.notes = data.notes;
+                if (data.logo) invoiceData.logo = data.logo;
                 if (data.sender) Object.assign(invoiceData.sender, data.sender);
                 if (data.recipient) Object.assign(invoiceData.recipient, data.recipient);
                 if (data.lineItems && data.lineItems.length > 0) {
@@ -1547,6 +1654,13 @@
                 document.getElementById('tax-detail').value = invoiceData.taxDetail || '';
                 document.getElementById('notes').value = invoiceData.notes || '';
                 document.getElementById('discount').value = invoiceData.discount || '';
+
+                // Restore logo
+                if (invoiceData.logo) {
+                    document.getElementById('logo-placeholder').style.display = 'none';
+                    document.getElementById('logo-preview').style.display = 'flex';
+                    document.getElementById('logo-preview-img').src = invoiceData.logo;
+                }
 
                 // Restore line items
                 while (lineItemsTable.rows.length > 0) {
@@ -1724,6 +1838,44 @@
 
             document.getElementById('notes').addEventListener('input', (e) => {
                 invoiceData.notes = e.target.value;
+                saveInvoiceData();
+            });
+
+            // Logo upload
+            var logoInput = document.getElementById('logo-input');
+            var logoPlaceholder = document.getElementById('logo-placeholder');
+            var logoPreview = document.getElementById('logo-preview');
+            var logoPreviewImg = document.getElementById('logo-preview-img');
+            var logoRemoveBtn = document.getElementById('logo-remove-btn');
+
+            logoInput.addEventListener('change', function(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 2 * 1024 * 1024) {
+                    showToast('Logo must be under 2MB.', 'error');
+                    return;
+                }
+                if (!file.type.match(/^image\/(png|jpeg|gif|webp)$/)) {
+                    showToast('Only PNG, JPG, GIF, and WebP images are allowed.', 'error');
+                    return;
+                }
+                var reader = new FileReader();
+                reader.onload = function(event) {
+                    invoiceData.logo = event.target.result;
+                    logoPlaceholder.style.display = 'none';
+                    logoPreview.style.display = 'flex';
+                    logoPreviewImg.src = event.target.result;
+                    saveInvoiceData();
+                };
+                reader.readAsDataURL(file);
+            });
+
+            logoRemoveBtn.addEventListener('click', function() {
+                invoiceData.logo = '';
+                logoInput.value = '';
+                logoPlaceholder.style.display = 'flex';
+                logoPreview.style.display = 'none';
+                logoPreviewImg.src = '';
                 saveInvoiceData();
             });
             
@@ -2161,9 +2313,20 @@
                 doc.setFont("helvetica");
                 doc.setFontSize(12);
 
+                // Add logo if present
+                var logoOffset = 0;
+                if (invoiceData.logo) {
+                    try {
+                        doc.addImage(invoiceData.logo, 'PNG', 20, 15, 40, 20);
+                        logoOffset = 25;
+                    } catch (e) {
+                        // If image format fails, skip logo
+                    }
+                }
+
                 doc.setFontSize(22);
                 doc.setTextColor.apply(doc, headerColor);
-                doc.text("INVOICE", 20, 20);
+                doc.text("INVOICE", 20 + logoOffset, 20);
 
                 doc.setTextColor(0, 0, 0);
                 doc.setFontSize(12);
