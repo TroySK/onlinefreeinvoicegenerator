@@ -143,12 +143,27 @@
         }
 
         .navbar-badge {
-            background: var(--primary-light);
-            color: var(--primary);
-            font-size: 0.75rem;
+            background: var(--primary);
+            color: white;
+            font-size: 0.6875rem;
             font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 9999px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.02em;
+        }
+
+        .save-status {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            white-space: nowrap;
+        }
+        .save-status.visible {
+            opacity: 1;
+        }
+        .save-status.saved {
+            color: var(--success);
         }
 
         .theme-toggle {

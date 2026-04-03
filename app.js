@@ -100,11 +100,24 @@
                     template: invoiceData.template
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                showSaveIndicator();
             } catch (e) {
                 if (e.name === 'QuotaExceededError' || e.code === 22) {
                     showToast('Storage full. Logo may not be saved. Consider using a smaller image.', 'error');
                 }
             }
+        }
+
+        var saveIndicatorTimeout;
+        function showSaveIndicator() {
+            var el = document.getElementById('save-status');
+            if (!el) return;
+            clearTimeout(saveIndicatorTimeout);
+            el.textContent = '\u2713 Saved';
+            el.classList.add('visible', 'saved');
+            saveIndicatorTimeout = setTimeout(function() {
+                el.classList.remove('visible', 'saved');
+            }, 2000);
         }
 
         function loadInvoiceData() {
