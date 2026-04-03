@@ -382,6 +382,18 @@
             background: var(--bg-subtle);
         }
 
+        /* De-emphasize empty rows */
+        .line-items tbody tr.empty-row {
+            opacity: 0.45;
+        }
+        .line-items tbody tr.empty-row:hover {
+            opacity: 0.7;
+        }
+        .line-items tbody tr.empty-row td {
+            border-bottom-style: dashed;
+            border-bottom-color: var(--border-subtle);
+        }
+
         .line-items textarea {
             width: 100%;
             padding: 8px 10px;

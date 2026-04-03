@@ -254,6 +254,7 @@
                         '</button>' +
                     '</td>';
                 attachRowListeners(row, i);
+                updateEmptyRowHint(i);
             });
             updateDeleteButtons();
 
@@ -676,6 +677,7 @@
 
             attachRowListeners(newRow, index);
             updateDeleteButtons();
+            updateEmptyRowHint(index);
             saveInvoiceData();
         }
 
@@ -854,7 +856,23 @@
                 }
             }
             
+            // Update empty row visual hint
+            updateEmptyRowHint(index);
+            
             calculateTotals();
+        }
+
+        // Add/remove empty-row class based on whether row has content
+        function updateEmptyRowHint(index) {
+            var row = lineItemsTable.rows[index];
+            if (!row) return;
+            var item = invoiceData.lineItems[index];
+            var isEmpty = !item.description && !item.quantity && !item.rate && !item.tax;
+            if (isEmpty) {
+                row.classList.add('empty-row');
+            } else {
+                row.classList.remove('empty-row');
+            }
         }
 
         // Calculate invoice totals (internal, non-debounced)
