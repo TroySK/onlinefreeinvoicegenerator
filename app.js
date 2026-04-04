@@ -52,6 +52,10 @@
 
         // Currency display using Intl.NumberFormat
         function getCurrencyDisplay(currencyCode) {
+            // Fallback for currencies with Unicode symbols that jsPDF's standard fonts don't support
+            if (currencyCode === 'INR') {
+                return 'Rs. ';
+            }
             try {
                 var parts = new Intl.NumberFormat('en', { style: 'currency', currency: currencyCode }).formatToParts(0);
                 for (var i = 0; i < parts.length; i++) {
@@ -1179,7 +1183,7 @@
                 doc.setFontSize(PDF.INVOICE_NO_FONT_SIZE);
 
                 // Add logo if present
-                var logoOffset = 0;
+                var logoRightEdge = 0;
                 if (invoiceData.logo) {
                     try {
                         // Detect image format from data URL
@@ -1192,7 +1196,7 @@
                             logoFormat = 'WEBP';
                         }
                         doc.addImage(invoiceData.logo, logoFormat, PDF.LOGO_X, PDF.LOGO_Y, PDF.LOGO_WIDTH, PDF.LOGO_HEIGHT);
-                        logoOffset = PDF.LOGO_OFFSET_Y;
+                        logoRightEdge = PDF.LOGO_X + PDF.LOGO_WIDTH;
                     } catch (e) {
                         // If image format fails, skip logo
                     }
@@ -1200,17 +1204,23 @@
 
                 doc.setFontSize(PDF.INVOICE_TITLE_FONT_SIZE);
                 doc.setTextColor.apply(doc, headerColor);
-                doc.text("INVOICE", PDF.MARGIN_LEFT + logoOffset, PDF.TOP_TITLE_Y);
+                var invoiceTitle = "INVOICE";
+                var titleWidth = doc.getTextWidth(invoiceTitle);
+                var titleX = logoRightEdge > 0
+                    ? Math.max(logoRightEdge + 10, PDF.PAGE_WIDTH - PDF.MARGIN_RIGHT - titleWidth)
+                    : PDF.MARGIN_LEFT;
+                doc.text(invoiceTitle, titleX, PDF.TOP_TITLE_Y);
 
                 doc.setTextColor(0, 0, 0);
                 doc.setFontSize(PDF.INVOICE_NO_FONT_SIZE);
-                doc.text("Invoice Number: " + invoiceData.invoiceNumber, PDF.MARGIN_LEFT, PDF.INVOICE_NO_Y);
+                var invoiceNoY = logoRightEdge > 0 ? PDF.LOGO_Y + PDF.LOGO_HEIGHT + 10 : PDF.INVOICE_NO_Y;
+                doc.text("Invoice Number: " + invoiceData.invoiceNumber, PDF.MARGIN_LEFT, invoiceNoY);
 
                 var dateText = "Date: " + invoiceData.date;
                 var dateWidth = doc.getTextWidth(dateText);
-                doc.text(dateText, PDF.DATE_X_RIGHT - dateWidth, PDF.INVOICE_NO_Y);
+                doc.text(dateText, PDF.DATE_X_RIGHT - dateWidth, invoiceNoY);
 
-                var infoY = PDF.INFO_START_Y;
+                var infoY = invoiceNoY + PDF.INFO_LINE_HEIGHT;
                 if (invoiceData.dueDate) {
                     doc.text("Due Date: " + invoiceData.dueDate, PDF.MARGIN_LEFT, infoY);
                     infoY += PDF.INFO_LINE_HEIGHT;

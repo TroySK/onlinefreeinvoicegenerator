@@ -793,6 +793,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 24px;
+            flex-wrap: wrap;
         }
 
         .template-selector {
@@ -863,6 +864,15 @@
         }
 
         /* Buttons */
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            flex: 1 1 auto;
+            justify-content: flex-end;
+            min-width: 0;
+        }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -1089,91 +1099,12 @@
                 height: 112px;
             }
 
-            #download-btn {
-                width: 100%;
-            }
-
-            .totals-wrapper {
-                justify-content: stretch;
-            }
-
-            .totals {
-                max-width: 100%;
-            }
-
-            /* Responsive table */
-            .line-items, .line-items thead, .line-items tbody, .line-items th, .line-items td, .line-items tr {
-                display: block;
-            }
-
-            .line-items thead tr {
-                position: absolute;
-                top: -9999px;
-                left: -9999px;
-            }
-
-            .line-items tr {
-                border: 1px solid var(--border);
-                border-radius: var(--radius-md);
-                margin-bottom: 12px;
-                padding: 12px;
-                background: var(--bg-surface);
-            }
-
-            .line-items td {
-                border: none;
-                position: relative;
-                padding: 8px 8px 8px 45%;
-                text-align: right;
-                border-bottom: 1px solid var(--border);
-            }
-
-            .line-items td:before {
-                content: attr(data-label);
-                position: absolute;
-                left: 10px;
-                width: 40%;
-                text-align: left;
-                font-weight: 600;
-                color: var(--text-secondary);
-            }
-
-            .line-items td:last-child {
-                border-bottom: none;
-            }
-
-            .line-items .tax-cell {
+            .action-buttons {
                 flex-direction: column;
-                align-items: flex-end;
             }
 
-            .line-items input, .line-items textarea {
-                font-size: 16px;
-                max-width: 100%;
-            }
-
-            .line-items textarea {
-                min-height: 60px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 0 16px;
-            }
-
-            .hero h1 {
-                font-size: 1.5rem;
-            }
-
-            .invoice-card {
-                padding: 16px;
-                border-radius: var(--radius-lg);
-            }
-
-            .action-bar {
-                padding: 16px;
-                border-radius: var(--radius-lg);
+            .action-buttons .btn {
+                width: 100%;
             }
 
             .template-option svg {
