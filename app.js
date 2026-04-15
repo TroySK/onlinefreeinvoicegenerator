@@ -1375,15 +1375,20 @@
             const item = invoiceData.lineItems[index];
             const amount = item.quantity * item.rate;
             const taxAmount = item.quantity * item.rate * item.tax / 100;
-            
+
             item.amount = parseFloat(amount.toFixed(2));
             item.taxAmount = parseFloat(taxAmount.toFixed(2));
-            
-            // Update UI
+
+            updateLineItemUI(index);
+            calculateTotals();
+        }
+
+        function updateLineItemUI(index) {
+            const item = invoiceData.lineItems[index];
+
             const amountCell = lineItemsTable.rows[index].cells[4];
             amountCell.textContent = item.amount.toFixed(2);
-            
-            // Update tax amount display
+
             var taxAmountElement = document.getElementById(`tax-amount-${index}`);
             if (taxAmountElement) {
                 if (item.taxAmount > 0) {
@@ -1394,11 +1399,8 @@
                     taxAmountElement.style.display = 'none';
                 }
             }
-            
-            // Update empty row visual hint
+
             updateEmptyRowHint(index);
-            
-            calculateTotals();
         }
 
         // Add/remove empty-row class based on whether row has content

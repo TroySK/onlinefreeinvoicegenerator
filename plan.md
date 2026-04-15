@@ -111,7 +111,7 @@
 - ✅ #82: **Currency selector is very long (30+ options)** — Grouped currencies by region (Americas, Europe, Asia, Oceania, Africa).
 
 ### Code Quality
-- [ ] #84: **`calculateLineItemAmount` directly accesses DOM** — Pending refactor.
+- ✅ #84: **`calculateLineItemAmount` directly accesses DOM** — Fixed by splitting into `calculateLineItemAmount()` (data only) and `updateLineItemUI()` (DOM update).
 - ✅ #85: **Magic numbers in PDF generation** — Fixed by extracting to `PDF` constants object.
 - ✅ #86: **`syncToDOM` rebuilds all line items from scratch** — Fixed with diff-and-update approach.
 - ✅ #87/#97: **No error handling for `localStorage` quota exceeded** — Fixed by catching `QuotaExceededError` and showing toast.
