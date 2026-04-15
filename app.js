@@ -889,18 +889,20 @@
                 }
 
                 var modal = document.getElementById('preview-modal');
-                var iframe = document.getElementById('preview-iframe');
+                var embed = document.getElementById('preview-embed');
                 var t = translations[currentLang] || translations.en;
 
                 try {
                     var jsPDF = window.jspdf.jsPDF;
                     var doc = new jsPDF();
                     generatePDFContent(doc, t);
-                    var pdfDataUrl = doc.output('datauristring');
-                    iframe.src = pdfDataUrl;
+                    var pdfBlob = doc.output('blob');
+                    var pdfBlobUrl = URL.createObjectURL(pdfBlob);
+                    embed.src = pdfBlobUrl;
                     modal.classList.add('open');
                 } catch (e) {
-                    showToast("Error generating preview.", "error");
+                    console.error('Preview error:', e);
+                    showToast("Error generating preview: " + e.message, "error");
                 }
             });
 
@@ -1572,7 +1574,7 @@
                 return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : [79, 70, 229];
             };
 
-            var headerColor = hexToRgb(primaryColor);
+var headerColor = hexToRgb(primaryColor);
             var currencyDisplay = getCurrencyDisplay(invoiceData.currency);
             t = t || translations[currentLang] || translations.en;
 

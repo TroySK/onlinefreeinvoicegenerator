@@ -925,7 +925,7 @@
             overflow: hidden;
         }
 
-        #preview-iframe {
+        #preview-embed {
             width: 100%;
             height: 60vh;
             border: 1px solid var(--border);
