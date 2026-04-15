@@ -98,30 +98,29 @@
 - ✅ #73/#98: **Invoice number collision risk** — Fixed with localStorage-based incrementing counter (`INV-000001`, `INV-000002`, etc.).
 
 ### P2 — Product Features
-- [ ] #74: **No "Paid/Unpaid/Overdue" status indicator** — Professional invoices typically show a payment status badge. Could add a status dropdown (Paid, Unpaid, Overdue) that renders as a stamp/watermark on the PDF.
-- [ ] #75: **No invoice preview before download** — Users can't see what the PDF will look like before downloading. Could add a modal preview or expandable preview section.
-- [ ] #76: **No way to set payment method details** — Bank account, PayPal, Stripe payment links are common on invoices. Could add an optional "Payment Details" section.
-- [ ] #77: **No multi-language support** — The UI is English-only. Could add language selector for labels, PDF output (e.g., "Invoice" → "Factura", "Rechnung", etc.).
-- [ ] #78: **Share button doesn't include PDF attachment** — The share/email only sends text summary. Could generate PDF as blob and attach via Web Share API (if supported) or provide a download link.
+- ✅ #74: **No "Paid/Unpaid/Overdue" status indicator** — Added status dropdown (Paid, Unpaid, Overdue) that renders as a stamp/watermark on the PDF.
+- ✅ #75: **No invoice preview before download** — Added modal preview with PDF iframe and download button.
+- ✅ #76: **No way to set payment method details** — Added "Payment Details" section with fields for bank, PayPal, and payment link.
+- ✅ #77: **No multi-language support** — Added language selector for EN, ES, FR, DE with full UI and PDF translation.
+- ✅ #78: **Share button doesn't include PDF attachment** — Updated share to generate PDF and attach via Web Share API (if supported).
 
 ### P3 — UI Polish
-- ✅ #79/#99: **Classic template dark mode** — Verified working. The selector `[data-theme="dark"] .template-classic .totals` has higher specificity (0-2-1) than `.template-classic .totals` (0-2-0) and correctly overrides the white background in dark mode.
-- ✅ #80: **Empty line items with 0.00 amounts look cluttered** — Fixed with `.empty-row` class (opacity 0.45, dashed borders).
+- ✅ #79/#99: **Classic template dark mode** — Verified working.
+- ✅ #80: **Empty line items with 0.00 amounts look cluttered** — Fixed with `.empty-row` class.
 - ✅ #81/#100: **No visual feedback when localStorage saves** — Fixed with "✓ Saved" indicator in navbar.
-- [ ] #82: **Currency selector is very long (30+ options)** — On mobile, the dropdown is unwieldy. Could group by region or add a search/filter within the dropdown.
-- ✅ #83/#93/#96: **Tax amount `(0.00)` overlaps with input on narrow screens** — Fixed by hiding tax amount when 0.
+- ✅ #82: **Currency selector is very long (30+ options)** — Grouped currencies by region (Americas, Europe, Asia, Oceania, Africa).
 
 ### Code Quality
-- [ ] #84: **`calculateLineItemAmount` directly accesses DOM** — Should use the data model and let `syncToDOM` handle updates, rather than directly manipulating `lineItemsTable.rows[index].cells[4]`.
+- [ ] #84: **`calculateLineItemAmount` directly accesses DOM** — Pending refactor.
 - ✅ #85: **Magic numbers in PDF generation** — Fixed by extracting to `PDF` constants object.
-- ✅ #86: **`syncToDOM` rebuilds all line items from scratch** — Fixed with diff-and-update approach that preserves focus state.
-- ✅ #87/#97: **No error handling for `localStorage` quota exceeded** — Fixed by catching `QuotaExceededError` and showing toast notification.
+- ✅ #86: **`syncToDOM` rebuilds all line items from scratch** — Fixed with diff-and-update approach.
+- ✅ #87/#97: **No error handling for `localStorage` quota exceeded** — Fixed by catching `QuotaExceededError` and showing toast.
 
 ### UX Enhancements
-- ✅ #88: **Auto-set due date based on common terms** — Added quick-select dropdown (Upon Receipt, Net 7/14/15/30/45/60/90).
-- [ ] #89: **Bulk actions for line items** — No way to delete all empty line items at once, or duplicate a line item.
-- [ ] #90: **Invoice history** — Could store multiple invoices in localStorage and allow switching between them.
-- ✅ #91: **Print-friendly CSS** — Fixed with print-specific styles that make inputs look like rendered text, hide interactive elements, and add page break protection.
+- ✅ #88: **Auto-set due date based on common terms** — Added quick-select dropdown.
+- ✅ #89: **Bulk actions for line items** — Added "Delete Empty Rows" button.
+- ✅ #90: **Invoice history** — Added history dropdown to store and switch between multiple invoices in localStorage.
+- ✅ #91: **Print-friendly CSS** — Fixed with print-specific styles.
 
 ### Additional Issues from Browser Testing
 - ✅ #92: **Duplicate invoice doesn't clear line items** — Fixed by resetting `lineItems` to single empty row.

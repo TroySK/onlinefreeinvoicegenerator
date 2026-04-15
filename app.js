@@ -31,8 +31,104 @@
             subtotal: 0.0,
             totalTax: 0.0,
             discount: 0.0,
-            grandTotal: 0.0
+            grandTotal: 0.0,
+            status: "",
+            paymentDetails: {
+                bank: "",
+                paypal: "",
+                link: ""
+            }
         };
+
+        // Multi-language translations
+        const translations = {
+            en: {
+                billingDetails: "Billing Details", senderName: "Your Name", senderAddress: "Your Address", senderEmail: "Your Email",
+                clientName: "Client Name", clientAddress: "Client Address", clientEmail: "Client Email",
+                invoiceDetails: "Invoice Details", invoiceNumber: "Invoice Number", date: "Date", dueDate: "Due Date",
+                poNumber: "PO Number", currency: "Currency", taxDetail: "Tax Detail", status: "Status",
+                unpaid: "Unpaid", paid: "Paid", overdue: "Overdue",
+                lineItems: "Line Items", description: "Description", quantity: "Quantity", rate: "Rate", tax: "Tax (%)", amount: "Amount",
+                addLineItem: "Add Line Item", subtotal: "Subtotal", totalTax: "Total Tax", discount: "Discount", grandTotal: "Grand Total",
+                notesTerms: "Notes & Terms", notesPlaceholder: "Payment is due within 30 days. Thank you for your business!",
+                companyLogo: "Company Logo (optional)", logoUpload: "Click to upload logo (PNG, JPG, GIF, WebP — max 2MB)",
+                chooseTemplate: "Choose Template", modern: "Modern", classic: "Classic", professional: "Professional",
+                downloadPdf: "Download PDF", clear: "Clear", duplicate: "Duplicate", share: "Share",
+                paymentDetails: "Payment Details (optional)", bankName: "Bank Name / Account", paypalLabel: "PayPal", paymentLink: "Payment Link (Stripe, etc.)",
+                termsReceipt: "Upon Receipt", termsNet7: "Net 7", termsNet14: "Net 14", termsNet15: "Net 15", termsNet30: "Net 30",
+                termsNet45: "Net 45", termsNet60: "Net 60", termsNet90: "Net 90",
+                invoice: "INVOICE", from: "From:", to: "To:", notesLabel: "Notes / Terms:", paymentDetailsLabel: "Payment Details:",
+                bank: "Bank:", paypal: "PayPal:", pay: "Pay:",
+                invoiceNo: "Invoice Number:", dateLabel: "Date:", dueDateLabel: "Due Date:", poNumberLabel: "PO Number:", taxDetailLabel: "Tax Detail:",
+                subtotalLabel: "Subtotal:", totalTaxLabel: "Total Tax:", discountLabel: "Discount:", grandTotalLabel: "Grand Total:",
+                invoiceHistory: "Invoice History"
+            },
+            es: {
+                billingDetails: "Datos de Facturación", senderName: "Tu Nombre", senderAddress: "Tu Dirección", senderEmail: "Tu Correo",
+                clientName: "Nombre del Cliente", clientAddress: "Dirección del Cliente", clientEmail: "Correo del Cliente",
+                invoiceDetails: "Detalles de Factura", invoiceNumber: "Número de Factura", date: "Fecha", dueDate: "Fecha de Vencimiento",
+                poNumber: "Número de Orden", currency: "Moneda", taxDetail: "Detalle de Impuesto", status: "Estado",
+                unpaid: "No Pagado", paid: "Pagado", overdue: "Vencido",
+                lineItems: "Ítems", description: "Descripción", quantity: "Cantidad", rate: "Tarifa", tax: "Impuesto (%)", amount: "Monto",
+                addLineItem: "Agregar Ítem", subtotal: "Subtotal", totalTax: "Impuesto Total", discount: "Descuento", grandTotal: "Total",
+                notesTerms: "Notas y Términos", notesPlaceholder: "El pago vence en 30 días. ¡Gracias por su negocio!",
+                companyLogo: "Logo de la Empresa (opcional)", logoUpload: "Haga clic para subir logo (PNG, JPG, GIF, WebP — máx 2MB)",
+                chooseTemplate: "Elegir Plantilla", modern: "Moderno", classic: "Clásico", professional: "Profesional",
+                downloadPdf: "Descargar PDF", clear: "Limpiar", duplicate: "Duplicar", share: "Compartir",
+                paymentDetails: "Datos de Pago (opcional)", bankName: "Banco / Cuenta", paypalLabel: "PayPal", paymentLink: "Enlace de Pago (Stripe, etc.)",
+                termsReceipt: "Al Recibir", termsNet7: "Neto 7", termsNet14: "Neto 14", termsNet15: "Neto 15", termsNet30: "Neto 30",
+                termsNet45: "Neto 45", termsNet60: "Neto 60", termsNet90: "Neto 90",
+                invoice: "FACTURA", from: "De:", to: "Para:", notesLabel: "Notas / Términos:", paymentDetailsLabel: "Datos de Pago:",
+                bank: "Banco:", paypal: "PayPal:", pay: "Pagar:",
+                invoiceNo: "Número de Factura:", dateLabel: "Fecha:", dueDateLabel: "Fecha de Vencimiento:", poNumberLabel: "Número de Orden:", taxDetailLabel: "Impuesto:",
+                subtotalLabel: "Subtotal:", totalTaxLabel: "Impuesto Total:", discountLabel: "Descuento:", grandTotalLabel: "Total:",
+                invoiceHistory: "Historial de Facturas"
+            },
+            fr: {
+                billingDetails: "Détails de Facturation", senderName: "Votre Nom", senderAddress: "Votre Adresse", senderEmail: "Votre Email",
+                clientName: "Nom du Client", clientAddress: "Adresse du Client", clientEmail: "Email du Client",
+                invoiceDetails: "Détails de la Facture", invoiceNumber: "Numéro de Facture", date: "Date", dueDate: "Date d'Échéance",
+                poNumber: "Numéro de Commande", currency: "Devise", taxDetail: "Détail Taxe", status: "Statut",
+                unpaid: "Non Payé", paid: "Payé", overdue: "En Retard",
+                lineItems: "Articles", description: "Description", quantity: "Quantité", rate: "Tarif", tax: "Taxe (%)", amount: "Montant",
+                addLineItem: "Ajouter un Article", subtotal: "Sous-total", totalTax: "Taxe Totale", discount: "Remise", grandTotal: "Total",
+                notesTerms: "Notes et Conditions", notesPlaceholder: "Paiement dû sous 30 jours. Merci pour votre affaire!",
+                companyLogo: "Logo de l'Entreprise (optionnel)", logoUpload: "Cliquez pour télécharger le logo (PNG, JPG, GIF, WebP — max 2MB)",
+                chooseTemplate: "Choisir le Modèle", modern: "Moderne", classic: "Classique", professional: "Professionnel",
+                downloadPdf: "Télécharger PDF", clear: "Effacer", duplicate: "Dupliquer", share: "Partager",
+                paymentDetails: "Détails de Paiement (optionnel)", bankName: "Banque / Compte", paypalLabel: "PayPal", paymentLink: "Lien de Paiement (Stripe, etc.)",
+                termsReceipt: "À Réception", termsNet7: "Net 7", termsNet14: "Net 14", termsNet15: "Net 15", termsNet30: "Net 30",
+                termsNet45: "Net 45", termsNet60: "Net 60", termsNet90: "Net 90",
+                invoice: "FACTURE", from: "De:", to: "À:", notesLabel: "Notes / Conditions:", paymentDetailsLabel: "Détails de Paiement:",
+                bank: "Banque:", paypal: "PayPal:", pay: "Payer:",
+                invoiceNo: "Numéro de Facture:", dateLabel: "Date:", dueDateLabel: "Date d'Échéance:", poNumberLabel: "N° Commande:", taxDetailLabel: "Taxe:",
+                subtotalLabel: "Sous-total:", totalTaxLabel: "Taxe Totale:", discountLabel: "Remise:", grandTotalLabel: "Total:",
+                invoiceHistory: "Historique des Factures"
+            },
+            de: {
+                billingDetails: "Abrechnungsdetails", senderName: "Ihr Name", senderAddress: "Ihre Adresse", senderEmail: "Ihre E-Mail",
+                clientName: "Kundenname", clientAddress: "Kundenadresse", clientEmail: "Kunden-E-Mail",
+                invoiceDetails: "Rechnungsdetails", invoiceNumber: "Rechnungsnummer", date: "Datum", dueDate: "Fälligkeitsdatum",
+                poNumber: "Bestellnummer", currency: "Währung", taxDetail: "Steuerdetails", status: "Status",
+                unpaid: "Unbezahlt", paid: "Bezahlt", overdue: "Überfällig",
+                lineItems: "Positionen", description: "Beschreibung", quantity: "Menge", rate: "Preis", tax: "Steuer (%)", amount: "Betrag",
+                addLineItem: "Position Hinzufügen", subtotal: "Zwischensumme", totalTax: "Gesamtsteuer", discount: "Rabatt", grandTotal: "Gesamt",
+                notesTerms: "Anmerkungen & Bedingungen", notesPlaceholder: "Zahlung innerhalb von 30 Tagen fällig. Vielen Dank!",
+                companyLogo: "Firmenlogo (optional)", logoUpload: "Klicken Sie, um Logo hochzuladen (PNG, JPG, GIF, WebP — max 2MB)",
+                chooseTemplate: "Vorlage Wählen", modern: "Modern", classic: "Klassisch", professional: "Professionell",
+                downloadPdf: "PDF Herunterladen", clear: "Löschen", duplicate: "Duplizieren", share: "Teilen",
+                paymentDetails: "Zahlungsdetails (optional)", bankName: "Bank / Konto", paypalLabel: "PayPal", paymentLink: "Zahlungslink (Stripe, etc.)",
+                termsReceipt: "Bei Erhalt", termsNet7: "Netto 7", termsNet14: "Netto 14", termsNet15: "Netto 15", termsNet30: "Netto 30",
+                termsNet45: "Netto 45", termsNet60: "Netto 60", termsNet90: "Netto 90",
+                invoice: "RECHNUNG", from: "Von:", to: "An:", notesLabel: "Anmerkungen:", paymentDetailsLabel: "Zahlungsdetails:",
+                bank: "Bank:", paypal: "PayPal:", pay: "Zahlen:",
+                invoiceNo: "Rechnungsnummer:", dateLabel: "Datum:", dueDateLabel: "Fälligkeitsdatum:", poNumberLabel: "Bestellnr.:", taxDetailLabel: "Steuer:",
+                subtotalLabel: "Zwischensumme:", totalTaxLabel: "Gesamtsteuer:", discountLabel: "Rabatt:", grandTotalLabel: "Gesamt:",
+                invoiceHistory: "Rechnungsverlauf"
+            }
+        };
+
+        let currentLang = 'en';
 
         // Validation errors
         const validationErrors = {
@@ -72,6 +168,7 @@
         // LocalStorage persistence
         const STORAGE_KEY = "invoice_data";
         const COUNTER_KEY = "invoice_counter";
+        const HISTORY_KEY = "invoice_history";
 
         function getNextInvoiceNumber() {
             try {
@@ -101,13 +198,63 @@
                         return { ...item };
                     }),
                     discount: invoiceData.discount,
-                    template: invoiceData.template
+                    template: invoiceData.template,
+                    status: invoiceData.status,
+                    paymentDetails: invoiceData.paymentDetails,
+                    savedAt: Date.now()
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+                // Update history
+                var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+                var existingIndex = history.findIndex(function(h) { return h.invoiceNumber === data.invoiceNumber; });
+                if (existingIndex >= 0) {
+                    history[existingIndex] = { invoiceNumber: data.invoiceNumber, date: data.date, savedAt: data.savedAt };
+                } else {
+                    history.push({ invoiceNumber: data.invoiceNumber, date: data.date, savedAt: data.savedAt });
+                }
+                // Keep only last 20 invoices
+                if (history.length > 20) history = history.slice(-20);
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+                updateHistoryDropdown();
+
                 showSaveIndicator();
             } catch (e) {
                 if (e.name === 'QuotaExceededError' || e.code === 22) {
                     showToast('Storage full. Logo may not be saved. Consider using a smaller image.', 'error');
+                }
+            }
+        }
+
+        function updateHistoryDropdown() {
+            var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            var select = document.getElementById('invoice-history');
+            select.innerHTML = '<option value="">-- Select saved invoice --</option>';
+            history.reverse().forEach(function(item) {
+                var opt = document.createElement('option');
+                opt.value = item.invoiceNumber;
+                opt.textContent = item.invoiceNumber + ' (' + item.date + ')';
+                select.appendChild(opt);
+            });
+        }
+
+        function loadFromHistory(invoiceNumber) {
+            var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            var historyItem = history.find(function(h) { return h.invoiceNumber === invoiceNumber; });
+            if (!historyItem) return;
+
+            // Save current invoice to history before switching (if it has data)
+            saveInvoiceData();
+
+            // Load the selected invoice from main storage (it was saved there too)
+            var saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                var data = JSON.parse(saved);
+                if (data.invoiceNumber === invoiceNumber) {
+                    loadInvoiceData();
+                    syncToDOM();
+                    calculateTotals();
+                    showToast('Loaded invoice: ' + invoiceNumber, 'success');
                 }
             }
         }
@@ -145,6 +292,8 @@
                 }
                 if (typeof data.discount === "number") invoiceData.discount = data.discount;
                 if (data.template) invoiceData.template = data.template;
+                if (data.status) invoiceData.status = data.status;
+                if (data.paymentDetails) invoiceData.paymentDetails = data.paymentDetails;
                 return true;
             } catch (e) {
                 return false;
@@ -181,6 +330,11 @@
         const invoiceContainer = document.getElementById('invoice-container');
         const addItemBtn = document.getElementById('add-item-btn');
         const downloadBtn = document.getElementById('download-btn');
+        const deleteEmptyRowsBtn = document.getElementById('delete-empty-rows-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const duplicateBtn = document.getElementById('duplicate-btn');
+        const shareBtn = document.getElementById('share-btn');
+        const previewBtn = document.getElementById('preview-btn');
         const lineItemsTable = document.getElementById('line-items').getElementsByTagName('tbody')[0];
 
         // Sync data model from DOM (reads all form values into invoiceData)
@@ -199,6 +353,12 @@
             invoiceData.taxDetail = document.getElementById('tax-detail').value;
             invoiceData.notes = document.getElementById('notes').value;
             invoiceData.discount = Math.max(0, parseFloat(document.getElementById('discount').value) || 0);
+            invoiceData.status = document.getElementById('invoice-status').value;
+            invoiceData.paymentDetails = {
+                bank: document.getElementById('payment-bank').value,
+                paypal: document.getElementById('payment-paypal').value,
+                link: document.getElementById('payment-link').value
+            };
 
             // Read line items from DOM
             var rows = lineItemsTable.rows;
@@ -238,6 +398,12 @@
             document.getElementById('tax-detail').value = invoiceData.taxDetail || '';
             document.getElementById('notes').value = invoiceData.notes || '';
             document.getElementById('discount').value = invoiceData.discount || '';
+            document.getElementById('invoice-status').value = invoiceData.status || '';
+            if (invoiceData.paymentDetails) {
+                document.getElementById('payment-bank').value = invoiceData.paymentDetails.bank || '';
+                document.getElementById('payment-paypal').value = invoiceData.paymentDetails.paypal || '';
+                document.getElementById('payment-link').value = invoiceData.paymentDetails.link || '';
+            }
 
             // Restore logo
             if (invoiceData.logo) {
@@ -427,7 +593,38 @@
             
             // Try to get currency from language map, fallback to USD
             const defaultCurrency = languageToCurrencyMap[userLanguage] || languageToCurrencyMap[userLanguage.split('-')[0]] || 'USD';
-            document.getElementById('currency-select').value = defaultCurrency;
+            
+            // Populate currency selector with grouped options
+            const currencySelect = document.getElementById('currency-select');
+            const currencyGroups = {
+                'Americas': ['USD', 'CAD', 'MXN', 'BRL', 'ARS', 'CLP', 'COP', 'PEN', 'UYU'],
+                'Europe': ['EUR', 'GBP', 'CHF', 'SEK', 'NOK', 'DKK', 'RUB', 'TRY', 'ILS', 'EGP'],
+                'Asia': ['JPY', 'CNY', 'INR', 'SGD', 'HKD', 'KRW', 'AED', 'SAR'],
+                'Oceania': ['AUD', 'NZD'],
+                'Africa': ['ZAR']
+            };
+            const currencyLabels = {
+                'USD': 'USD - US Dollar', 'EUR': 'EUR - Euro', 'GBP': 'GBP - British Pound', 'CAD': 'CAD - Canadian Dollar',
+                'AUD': 'AUD - Australian Dollar', 'JPY': 'JPY - Japanese Yen', 'CNY': 'CNY - Chinese Yuan', 'INR': 'INR - Indian Rupee',
+                'BRL': 'BRL - Brazilian Real', 'MXN': 'MXN - Mexican Peso', 'SGD': 'SGD - Singapore Dollar', 'NZD': 'NZD - New Zealand Dollar',
+                'CHF': 'CHF - Swiss Franc', 'HKD': 'HKD - Hong Kong Dollar', 'SEK': 'SEK - Swedish Krona', 'NOK': 'NOK - Norwegian Krone',
+                'DKK': 'DKK - Danish Krone', 'ZAR': 'ZAR - South African Rand', 'RUB': 'RUB - Russian Ruble', 'KRW': 'KRW - South Korean Won',
+                'TRY': 'TRY - Turkish Lira', 'AED': 'AED - UAE Dirham', 'SAR': 'SAR - Saudi Riyal', 'ILS': 'ILS - Israeli Shekel',
+                'ARS': 'ARS - Argentine Peso', 'CLP': 'CLP - Chilean Peso', 'COP': 'COP - Colombian Peso', 'PEN': 'PEN - Peruvian Sol',
+                'UYU': 'UYU - Uruguayan Peso', 'EGP': 'EGP - Egyptian Pound'
+            };
+            for (var groupName in currencyGroups) {
+                var optgroup = document.createElement('optgroup');
+                optgroup.label = groupName;
+                currencyGroups[groupName].forEach(function(code) {
+                    var option = document.createElement('option');
+                    option.value = code;
+                    option.textContent = currencyLabels[code] || code;
+                    optgroup.appendChild(option);
+                });
+                currencySelect.appendChild(optgroup);
+            }
+            currencySelect.value = defaultCurrency;
             invoiceData.currency = defaultCurrency;
 
             // Restore saved data into DOM
@@ -465,6 +662,14 @@
                         document.getElementById('due-date').value = dueDateStr;
                         syncFromDOM();
                         saveInvoiceData();
+                    }
+                } else if (e.target.id === 'invoice-status') {
+                    syncFromDOM();
+                    saveInvoiceData();
+                } else if (e.target.id === 'invoice-history') {
+                    if (e.target.value) {
+                        loadFromHistory(e.target.value);
+                        e.target.value = '';
                     }
                 }
             });
@@ -540,17 +745,58 @@
                 saveInvoiceData();
             });
 
-            document.getElementById('add-item-btn').addEventListener('click', addItem);
-            document.getElementById('download-btn').addEventListener('click', downloadPDF);
+            if (addItemBtn) addItemBtn.addEventListener('click', addItem);
+            if (downloadBtn) downloadBtn.addEventListener('click', downloadPDF);
 
-            document.getElementById('clear-btn').addEventListener('click', function() {
+            // Bulk action: delete empty rows
+            if (deleteEmptyRowsBtn) deleteEmptyRowsBtn.addEventListener('click', function() {
+                var emptyIndices = [];
+                invoiceData.lineItems.forEach(function(item, i) {
+                    if (!item.description && !item.quantity && !item.rate && !item.tax) {
+                        emptyIndices.push(i);
+                    }
+                });
+
+                if (emptyIndices.length === 0) {
+                    showToast("No empty rows to delete.", "success");
+                    return;
+                }
+
+                // Remove empty items from data model (starting from highest index)
+                for (var i = emptyIndices.length - 1; i >= 0; i--) {
+                    invoiceData.lineItems.splice(emptyIndices[i], 1);
+                }
+
+                // Re-render table
+                while (lineItemsTable.rows.length > 0) {
+                    lineItemsTable.deleteRow(0);
+                }
+
+                invoiceData.lineItems.forEach(function(item, i) {
+                    var row = lineItemsTable.insertRow();
+                    row.innerHTML = '<td data-label="Description"><textarea class="item-description" placeholder="Item description">' + (item.description || '') + '</textarea></td>' +
+                        '<td data-label="Quantity"><input type="number" class="item-quantity" placeholder="0" min="0" step="1" value="' + (item.quantity || '') + '"></td>' +
+                        '<td data-label="Rate"><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01" value="' + (item.rate || '') + '"></td>' +
+                        '<td data-label="Tax (%)" class="tax-cell"><input type="number" class="item-tax" placeholder="0" min="0" max="100" step="0.1" value="' + (item.tax || '') + '"><div class="tax-amount" id="tax-amount-' + i + '"></div></td>' +
+                        '<td data-label="Amount" class="item-amount">' + (item.amount ? item.amount.toFixed(2) : '0.00') + '</td>' +
+                        '<td data-label="Actions" class="actions-col"><button type="button" class="delete-row-btn" aria-label="Remove line item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></td>';
+                    attachRowListeners(row, i);
+                });
+
+                updateDeleteButtons();
+                calculateTotals();
+                saveInvoiceData();
+                showToast("Empty rows removed.", "success");
+            });
+
+            if (clearBtn) clearBtn.addEventListener('click', function() {
                 if (confirm('Clear all fields and start over? This cannot be undone.')) {
                     localStorage.removeItem(STORAGE_KEY);
                     location.reload();
                 }
             });
 
-            document.getElementById('duplicate-btn').addEventListener('click', function() {
+            if (duplicateBtn) duplicateBtn.addEventListener('click', function() {
                 var today = new Date().toISOString().split('T')[0];
                 invoiceData.invoiceNumber = getNextInvoiceNumber();
                 invoiceData.date = today;
@@ -572,6 +818,7 @@
                 invoiceData.totalTax = 0;
                 invoiceData.discount = 0;
                 invoiceData.grandTotal = 0;
+                invoiceData.status = '';
 
                 syncToDOM();
                 calculateTotals();
@@ -590,14 +837,36 @@
                 saveInvoiceData();
                 showToast('Invoice duplicated. Update recipient and download.', 'success');
             });
+            if (shareBtn) shareBtn.addEventListener('click', function() {
+                syncFromDOM();
+                _calculateTotals();
 
-            document.getElementById('share-btn').addEventListener('click', function() {
-                var subject = 'Invoice ' + invoiceData.invoiceNumber;
-                var body = 'Please find invoice ' + invoiceData.invoiceNumber + ' dated ' + invoiceData.date + '.\n\n';
-                body += 'Amount Due: ' + getCurrencyDisplay(invoiceData.currency) + invoiceData.grandTotal.toFixed(2) + '\n\n';
-                if (invoiceData.sender.name) body += 'From: ' + invoiceData.sender.name + '\n';
-                if (invoiceData.recipient.name) body += 'To: ' + invoiceData.recipient.name + '\n';
+                var t = translations[currentLang];
+                var subject = (t.invoice || 'Invoice') + ' ' + invoiceData.invoiceNumber;
+                var body = (t.invoiceNo || 'Invoice Number:') + ' ' + invoiceData.invoiceNumber + '\n';
+                body += (t.dateLabel || 'Date:') + ' ' + invoiceData.date + '\n';
+                body += (t.grandTotalLabel || 'Grand Total:') + ' ' + getCurrencyDisplay(invoiceData.currency) + invoiceData.grandTotal.toFixed(2) + '\n\n';
+                if (invoiceData.sender.name) body += (t.from || 'From:') + ' ' + invoiceData.sender.name + '\n';
+                if (invoiceData.recipient.name) body += (t.to || 'To:') + ' ' + invoiceData.recipient.name + '\n';
+                body += '\n' + window.location.href;
 
+                // Try to share with PDF using Web Share API with file support
+                if (navigator.share && navigator.canShare) {
+                    try {
+                        var jsPDF = window.jspdf.jsPDF;
+                        var doc = new jsPDF();
+                        generatePDFContent(doc, t);
+                        var pdfBlob = doc.output('blob');
+                        var pdfFile = new File([pdfBlob], 'invoice-' + invoiceData.invoiceNumber + '.pdf', { type: 'application/pdf' });
+                        var shareData = { title: subject, text: body, files: [pdfFile] };
+                        if (navigator.canShare(shareData)) {
+                            navigator.share(shareData).catch(function() {});
+                            return;
+                        }
+                    } catch (e) {}
+                }
+
+                // Fallback: use regular share or mailto
                 if (navigator.share) {
                     navigator.share({
                         title: subject,
@@ -610,6 +879,45 @@
                     window.location.href = mailtoLink;
                 }
             });
+            if (previewBtn) previewBtn.addEventListener('click', function() {
+                syncFromDOM();
+                _calculateTotals();
+
+                if (!window.jspdf) {
+                    showToast("PDF library not loaded. Please refresh the page.", "error");
+                    return;
+                }
+
+                var modal = document.getElementById('preview-modal');
+                var iframe = document.getElementById('preview-iframe');
+                var t = translations[currentLang] || translations.en;
+
+                try {
+                    var jsPDF = window.jspdf.jsPDF;
+                    var doc = new jsPDF();
+                    generatePDFContent(doc, t);
+                    var pdfDataUrl = doc.output('datauristring');
+                    iframe.src = pdfDataUrl;
+                    modal.classList.add('open');
+                } catch (e) {
+                    showToast("Error generating preview.", "error");
+                }
+            });
+
+            // Close preview modal
+            document.querySelector('.modal-close').addEventListener('click', function() {
+                document.getElementById('preview-modal').classList.remove('open');
+            });
+
+            document.querySelector('.modal-backdrop').addEventListener('click', function() {
+                document.getElementById('preview-modal').classList.remove('open');
+            });
+
+            // Download from preview modal
+            document.getElementById('preview-download-btn').addEventListener('click', function() {
+                document.getElementById('preview-modal').classList.remove('open');
+                downloadPDF();
+            });
             
             // Add template selection event listeners
             document.querySelectorAll('input[name="template"]').forEach(radio => {
@@ -621,7 +929,25 @@
                     }
                 });
             });
+
+            // Language selector
+            document.getElementById('language-select').addEventListener('change', function(e) {
+                currentLang = e.target.value;
+                applyTranslations();
+                saveInvoiceData();
+            });
+
+            // Try to set language from localStorage or browser
+            var savedLang = localStorage.getItem('invoice_language');
+            if (savedLang && translations[savedLang]) {
+                currentLang = savedLang;
+                document.getElementById('language-select').value = currentLang;
+            }
+            applyTranslations();
             
+            // Initialize history dropdown
+            updateHistoryDropdown();
+
             // Add event listeners to the first row
             attachRowListeners(lineItemsTable.rows[0], 0);
             
@@ -724,6 +1050,126 @@
             lineItemsTable.classList.remove('template-modern1', 'template-classic', 'template-business');
             // Add the selected template class
             lineItemsTable.classList.add(`template-${invoiceData.template}`);
+        }
+
+        // Apply translations to UI
+        function applyTranslations() {
+            var t = translations[currentLang];
+            if (!t) return;
+
+            // Store current values before updating labels
+            var paymentBankVal = document.getElementById('payment-bank').value;
+            var paymentPaypalVal = document.getElementById('payment-paypal').value;
+            var paymentLinkVal = document.getElementById('payment-link').value;
+            var notesVal = document.getElementById('notes').value;
+
+            // Update section titles
+            var sections = document.querySelectorAll('.card-section-title');
+            if (sections[0]) sections[0].innerHTML = getIcon('user') + ' ' + t.billingDetails;
+            if (sections[1]) sections[1].innerHTML = getIcon('calendar') + ' ' + t.invoiceDetails;
+            if (sections[2]) sections[2].innerHTML = getIcon('list') + ' ' + t.lineItems;
+            if (sections[3]) sections[3].innerHTML = getIcon('file') + ' ' + t.notesTerms;
+
+            // Update labels - iterate all label elements and match by for attribute
+            var labelMap = {
+                'sender-name': t.senderName, 'sender-address': t.senderAddress, 'sender-email': t.senderEmail,
+                'recipient-name': t.clientName, 'recipient-address': t.clientAddress, 'recipient-email': t.clientEmail,
+                'invoice-number': t.invoiceNumber, 'invoice-date': t.date, 'due-date': t.dueDate,
+                'po-number': t.poNumber, 'currency-select': t.currency, 'invoice-history': t.invoiceHistory || 'Invoice History', 'tax-detail': t.taxDetail,
+                'invoice-status': t.status, 'notes': t.notesTerms,
+                'payment-bank': t.bankName, 'payment-paypal': t.paypalLabel, 'payment-link': t.paymentLink,
+                'payment-details-label': t.paymentDetails, 'logo-upload-label': t.companyLogo
+            };
+
+            for (var id in labelMap) {
+                var label = document.querySelector('label[for="' + id + '"]');
+                if (label) label.textContent = labelMap[id];
+            }
+
+            // Update placeholder text
+            var notesEl = document.getElementById('notes');
+            if (notesEl && !notesEl.value) notesEl.placeholder = t.notesPlaceholder;
+
+            // Update buttons
+            var addItemBtn = document.getElementById('add-item-btn');
+            if (addItemBtn) addItemBtn.innerHTML = getIcon('plus') + ' ' + t.addLineItem;
+
+            var downloadBtn = document.getElementById('download-btn');
+            if (downloadBtn) downloadBtn.innerHTML = getIcon('download') + ' ' + t.downloadPdf;
+
+            var clearBtn = document.getElementById('clear-btn');
+            if (clearBtn) clearBtn.innerHTML = getIcon('trash') + ' ' + t.clear;
+
+            var duplicateBtn = document.getElementById('duplicate-btn');
+            if (duplicateBtn) duplicateBtn.innerHTML = getIcon('copy') + ' ' + t.duplicate;
+
+            var shareBtn = document.getElementById('share-btn');
+            if (shareBtn) shareBtn.innerHTML = getIcon('share') + ' ' + t.share;
+
+            // Update template labels
+            var templateLabels = document.querySelectorAll('.template-option span');
+            if (templateLabels[0]) templateLabels[0].textContent = t.modern;
+            if (templateLabels[1]) templateLabels[1].textContent = t.classic;
+            if (templateLabels[2]) templateLabels[2].textContent = t.professional;
+
+            var templateSelectorLabel = document.querySelector('.template-selector-label');
+            if (templateSelectorLabel) templateSelectorLabel.textContent = t.chooseTemplate;
+
+            // Update status options
+            var statusSel = document.getElementById('invoice-status');
+            if (statusSel) {
+                statusSel.options[0].textContent = t.unpaid;
+                statusSel.options[1].textContent = t.paid;
+                statusSel.options[2].textContent = t.overdue;
+            }
+
+            // Update due date preset
+            var dueDatePreset = document.getElementById('due-date-preset');
+            if (dueDatePreset) {
+                dueDatePreset.options[0].textContent = 'Terms...';
+                dueDatePreset.options[1].textContent = t.termsReceipt;
+                dueDatePreset.options[2].textContent = t.termsNet7;
+                dueDatePreset.options[3].textContent = t.termsNet14;
+                dueDatePreset.options[4].textContent = t.termsNet15;
+                dueDatePreset.options[5].textContent = t.termsNet30;
+                dueDatePreset.options[6].textContent = t.termsNet45;
+                dueDatePreset.options[7].textContent = t.termsNet60;
+                dueDatePreset.options[8].textContent = t.termsNet90;
+            }
+
+            // Update logo upload label
+            var logoUploadLabel = document.getElementById('logo-upload-label');
+            if (logoUploadLabel) logoUploadLabel.textContent = t.companyLogo;
+
+            var logoPlaceholderText = document.querySelector('.logo-upload-placeholder span');
+            if (logoPlaceholderText) logoPlaceholderText.textContent = t.logoUpload;
+
+            // Restore values that might have been cleared
+            document.getElementById('payment-bank').value = paymentBankVal;
+            document.getElementById('payment-paypal').value = paymentPaypalVal;
+            document.getElementById('payment-link').value = paymentLinkVal;
+            document.getElementById('notes').value = notesVal;
+
+            // Save language preference
+            try {
+                localStorage.setItem('invoice_language', currentLang);
+            } catch (e) {}
+        }
+
+        // Helper function to get SVG icons
+        function getIcon(type) {
+            var icons = {
+                'user': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+                'calendar': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
+                'list': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
+                'file': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>',
+                'plus': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
+                'download': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
+                'trash': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>',
+                'copy': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
+                'share': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>'
+            };
+            return icons[type] || '';
         }
 
         // Add a new line item
@@ -1113,6 +1559,145 @@
             DATE_X_RIGHT: 190
         };
 
+        // Generate PDF content (used by both download and share)
+        function generatePDFContent(doc, t) {
+            var currentTemplate = invoiceData.template;
+            var template = templates.find(function(tmpl) { return tmpl.templateId === currentTemplate; });
+            var primaryColor = template ? template.primaryColor : "#4f46e5";
+
+            var hexToRgb = function(hex) {
+                var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : [79, 70, 229];
+            };
+
+            var headerColor = hexToRgb(primaryColor);
+            var currencyDisplay = getCurrencyDisplay(invoiceData.currency);
+            t = t || translations[currentLang] || translations.en;
+
+            doc.setFont("helvetica");
+            doc.setFontSize(PDF.INVOICE_NO_FONT_SIZE);
+
+            var logoRightEdge = 0;
+            if (invoiceData.logo) {
+                try {
+                    var logoFormat = 'PNG';
+                    if (invoiceData.logo.indexOf('data:image/jpeg') !== -1 || invoiceData.logo.indexOf('data:image/jpg') !== -1) logoFormat = 'JPEG';
+                    else if (invoiceData.logo.indexOf('data:image/gif') !== -1) logoFormat = 'GIF';
+                    else if (invoiceData.logo.indexOf('data:image/webp') !== -1) logoFormat = 'WEBP';
+                    doc.addImage(invoiceData.logo, logoFormat, PDF.LOGO_X, PDF.LOGO_Y, PDF.LOGO_WIDTH, PDF.LOGO_HEIGHT);
+                    logoRightEdge = PDF.LOGO_X + PDF.LOGO_WIDTH;
+                } catch (e) {}
+            }
+
+            doc.setFontSize(PDF.INVOICE_TITLE_FONT_SIZE);
+            doc.setTextColor.apply(doc, headerColor);
+            var invoiceTitle = t.invoice || "INVOICE";
+            var titleWidth = doc.getTextWidth(invoiceTitle);
+            var titleX = logoRightEdge > 0 ? Math.max(logoRightEdge + 10, PDF.PAGE_WIDTH - PDF.MARGIN_RIGHT - titleWidth) : PDF.MARGIN_LEFT;
+            doc.text(invoiceTitle, titleX, PDF.TOP_TITLE_Y);
+
+            if (invoiceData.status && invoiceData.status !== "") {
+                var statusText = invoiceData.status.toUpperCase();
+                var statusColor = invoiceData.status === "paid" ? [16, 185, 129] : invoiceData.status === "overdue" ? [239, 68, 68] : [245, 158, 11];
+                doc.setFontSize(14);
+                doc.setTextColor.apply(doc, statusColor);
+                doc.text(statusText, PDF.PAGE_WIDTH - PDF.MARGIN_RIGHT, PDF.TOP_TITLE_Y, { align: 'right' });
+            }
+
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(PDF.INVOICE_NO_FONT_SIZE);
+            var invoiceNoY = logoRightEdge > 0 ? PDF.LOGO_Y + PDF.LOGO_HEIGHT + 10 : PDF.INVOICE_NO_Y;
+            doc.text((t.invoiceNo || "Invoice Number:") + " " + invoiceData.invoiceNumber, PDF.MARGIN_LEFT, invoiceNoY);
+
+            var dateText = (t.dateLabel || "Date:") + " " + invoiceData.date;
+            var dateWidth = doc.getTextWidth(dateText);
+            doc.text(dateText, PDF.DATE_X_RIGHT - dateWidth, invoiceNoY);
+
+            var infoY = invoiceNoY + PDF.INFO_LINE_HEIGHT;
+            if (invoiceData.dueDate) { doc.text((t.dueDateLabel || "Due Date:") + " " + invoiceData.dueDate, PDF.MARGIN_LEFT, infoY); infoY += PDF.INFO_LINE_HEIGHT; }
+            if (invoiceData.poNumber.trim()) { doc.text((t.poNumberLabel || "PO Number:") + " " + invoiceData.poNumber, PDF.MARGIN_LEFT, infoY); infoY += PDF.INFO_LINE_HEIGHT; }
+            if (invoiceData.taxDetail.trim()) { doc.text((t.taxDetailLabel || "Tax Detail:") + " " + invoiceData.taxDetail, PDF.MARGIN_LEFT, infoY); infoY += PDF.INFO_LINE_HEIGHT; }
+
+            doc.setFontSize(PDF.FROM_TO_LABEL_FONT_SIZE);
+            doc.setTextColor.apply(doc, headerColor);
+            doc.text((t.from || "From:") + " ", PDF.FROM_X, infoY + PDF.FROM_TO_LABEL_Y_OFFSET);
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(PDF.FROM_TO_TEXT_FONT_SIZE);
+            doc.text(invoiceData.sender.name, PDF.FROM_X, infoY + PDF.FROM_TO_NAME_Y_OFFSET);
+            var senderAddressLines = doc.splitTextToSize(invoiceData.sender.address, PDF.ADDR_WIDTH);
+            doc.text(senderAddressLines, PDF.FROM_X, infoY + PDF.FROM_TO_ADDR_Y_OFFSET);
+            var senderAddressHeight = senderAddressLines.length * PDF.ADDR_LINE_HEIGHT;
+            doc.text(invoiceData.sender.email, PDF.FROM_X, infoY + PDF.FROM_TO_ADDR_Y_OFFSET + senderAddressHeight);
+
+            doc.setFontSize(PDF.FROM_TO_LABEL_FONT_SIZE);
+            doc.setTextColor.apply(doc, headerColor);
+            doc.text((t.to || "To:") + " ", PDF.TO_X, infoY + PDF.FROM_TO_LABEL_Y_OFFSET);
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(PDF.FROM_TO_TEXT_FONT_SIZE);
+            doc.text(invoiceData.recipient.name, PDF.TO_X, infoY + PDF.FROM_TO_NAME_Y_OFFSET);
+            var recipientAddressLines = doc.splitTextToSize(invoiceData.recipient.address, PDF.ADDR_WIDTH);
+            doc.text(recipientAddressLines, PDF.TO_X, infoY + PDF.FROM_TO_ADDR_Y_OFFSET);
+            var recipientAddressHeight = recipientAddressLines.length * PDF.ADDR_LINE_HEIGHT;
+            doc.text(invoiceData.recipient.email, PDF.TO_X, infoY + PDF.FROM_TO_ADDR_Y_OFFSET + recipientAddressHeight);
+
+            var tableStartY = Math.max(PDF.TABLE_MIN_Y, infoY + PDF.TABLE_Y_OFFSET + Math.max(senderAddressHeight, recipientAddressHeight));
+            var adjustedTableStartY = tableStartY + PDF.TABLE_Y_OFFSET;
+
+            var headers = [[t.description || "Description", t.quantity || "Quantity", t.rate || "Rate", t.tax || "Tax %", t.amount || "Amount"]];
+            var rows = invoiceData.lineItems.map(function(item) {
+                return [item.description, item.quantity, currencyDisplay + item.rate.toFixed(2), item.tax, currencyDisplay + item.amount.toFixed(2)];
+            });
+
+            doc.autoTable({ head: headers, body: rows, startY: adjustedTableStartY, theme: 'grid',
+                headStyles: { fillColor: headerColor, textColor: [255, 255, 255] },
+                styles: { cellPadding: PDF.TABLE_CELL_PADDING, fontSize: PDF.TABLE_FONT_SIZE }
+            });
+
+            var finalY = (doc.lastAutoTable && doc.lastAutoTable.finalY) || adjustedTableStartY + 40;
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(PDF.FROM_TO_TEXT_FONT_SIZE);
+            var labelX = PDF.TOTALS_LABEL_X, valueX = PDF.TOTALS_VALUE_X, lineHeight = PDF.TOTALS_LINE_HEIGHT;
+
+            doc.text((t.subtotalLabel || 'Subtotal:') + ' ', labelX, finalY + lineHeight);
+            doc.text(currencyDisplay + invoiceData.subtotal.toFixed(2), valueX - doc.getTextWidth(currencyDisplay + invoiceData.subtotal.toFixed(2)), finalY + lineHeight);
+
+            doc.text((t.totalTaxLabel || 'Total Tax:') + ' ', labelX, finalY + (lineHeight * 2));
+            doc.text(currencyDisplay + invoiceData.totalTax.toFixed(2), valueX - doc.getTextWidth(currencyDisplay + invoiceData.totalTax.toFixed(2)), finalY + (lineHeight * 2));
+
+            doc.text((t.discountLabel || 'Discount:') + ' ', labelX, finalY + (lineHeight * 3));
+            doc.text(currencyDisplay + invoiceData.discount.toFixed(2), valueX - doc.getTextWidth(currencyDisplay + invoiceData.discount.toFixed(2)), finalY + (lineHeight * 3));
+
+            doc.setFontSize(PDF.GRAND_TOTAL_FONT_SIZE);
+            doc.setTextColor.apply(doc, headerColor);
+            doc.text((t.grandTotalLabel || 'Grand Total:') + ' ', labelX, finalY + (lineHeight * 4));
+            doc.text(currencyDisplay + invoiceData.grandTotal.toFixed(2), valueX - doc.getTextWidth(currencyDisplay + invoiceData.grandTotal.toFixed(2)), finalY + (lineHeight * 4));
+
+            var currentY = finalY + (lineHeight * 5) + PDF.NOTES_Y_OFFSET;
+            if (invoiceData.notes.trim()) {
+                var notesY = finalY + (lineHeight * 5) + PDF.NOTES_Y_OFFSET;
+                doc.setFontSize(PDF.NOTES_LABEL_FONT_SIZE);
+                doc.setTextColor.apply(doc, PDF.NOTES_TEXT_COLOR);
+                doc.text(t.notesLabel || "Notes / Terms:", PDF.MARGIN_LEFT, notesY);
+                doc.setFontSize(PDF.NOTES_FONT_SIZE);
+                var notesLines = doc.splitTextToSize(invoiceData.notes, PDF.NOTES_MAX_WIDTH);
+                doc.text(notesLines, PDF.MARGIN_LEFT, notesY + PDF.NOTES_LINE_HEIGHT);
+                currentY = notesY + PDF.NOTES_LINE_HEIGHT + (notesLines.length * PDF.NOTES_LINE_HEIGHT);
+            }
+
+            if (invoiceData.paymentDetails && (invoiceData.paymentDetails.bank || invoiceData.paymentDetails.paypal || invoiceData.paymentDetails.link)) {
+                doc.setFontSize(PDF.NOTES_LABEL_FONT_SIZE);
+                doc.setTextColor.apply(doc, PDF.NOTES_TEXT_COLOR);
+                doc.text(t.paymentDetailsLabel || "Payment Details:", PDF.MARGIN_LEFT, currentY + 5);
+                doc.setFontSize(PDF.NOTES_FONT_SIZE);
+                doc.setTextColor(0, 0, 0);
+                var paymentLines = [];
+                if (invoiceData.paymentDetails.bank) paymentLines.push((t.bank || "Bank:") + " " + invoiceData.paymentDetails.bank);
+                if (invoiceData.paymentDetails.paypal) paymentLines.push((t.paypal || "PayPal:") + " " + invoiceData.paymentDetails.paypal);
+                if (invoiceData.paymentDetails.link) paymentLines.push((t.pay || "Pay:") + " " + invoiceData.paymentDetails.link);
+                doc.text(paymentLines, PDF.MARGIN_LEFT, currentY + 12);
+            }
+        }
+
         // Download PDF
         function downloadPDF() {
             // Ensure totals are up to date (in case debounce hasn't fired)
@@ -1162,167 +1747,8 @@
             try {
                 var jsPDF = window.jspdf.jsPDF;
                 var doc = new jsPDF();
-
-                var currentTemplate = invoiceData.template;
-                var template = templates.find(function(t) { return t.templateId === currentTemplate; });
-                var primaryColor = template ? template.primaryColor : "#4f46e5";
-
-                var hexToRgb = function(hex) {
-                    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-                    return result ? [
-                        parseInt(result[1], 16),
-                        parseInt(result[2], 16),
-                        parseInt(result[3], 16)
-                    ] : [79, 70, 229];
-                };
-
-                var headerColor = hexToRgb(primaryColor);
-                var currencyDisplay = getCurrencyDisplay(invoiceData.currency);
-
-                doc.setFont("helvetica");
-                doc.setFontSize(PDF.INVOICE_NO_FONT_SIZE);
-
-                // Add logo if present
-                var logoRightEdge = 0;
-                if (invoiceData.logo) {
-                    try {
-                        // Detect image format from data URL
-                        var logoFormat = 'PNG';
-                        if (invoiceData.logo.indexOf('data:image/jpeg') !== -1 || invoiceData.logo.indexOf('data:image/jpg') !== -1) {
-                            logoFormat = 'JPEG';
-                        } else if (invoiceData.logo.indexOf('data:image/gif') !== -1) {
-                            logoFormat = 'GIF';
-                        } else if (invoiceData.logo.indexOf('data:image/webp') !== -1) {
-                            logoFormat = 'WEBP';
-                        }
-                        doc.addImage(invoiceData.logo, logoFormat, PDF.LOGO_X, PDF.LOGO_Y, PDF.LOGO_WIDTH, PDF.LOGO_HEIGHT);
-                        logoRightEdge = PDF.LOGO_X + PDF.LOGO_WIDTH;
-                    } catch (e) {
-                        // If image format fails, skip logo
-                    }
-                }
-
-                doc.setFontSize(PDF.INVOICE_TITLE_FONT_SIZE);
-                doc.setTextColor.apply(doc, headerColor);
-                var invoiceTitle = "INVOICE";
-                var titleWidth = doc.getTextWidth(invoiceTitle);
-                var titleX = logoRightEdge > 0
-                    ? Math.max(logoRightEdge + 10, PDF.PAGE_WIDTH - PDF.MARGIN_RIGHT - titleWidth)
-                    : PDF.MARGIN_LEFT;
-                doc.text(invoiceTitle, titleX, PDF.TOP_TITLE_Y);
-
-                doc.setTextColor(0, 0, 0);
-                doc.setFontSize(PDF.INVOICE_NO_FONT_SIZE);
-                var invoiceNoY = logoRightEdge > 0 ? PDF.LOGO_Y + PDF.LOGO_HEIGHT + 10 : PDF.INVOICE_NO_Y;
-                doc.text("Invoice Number: " + invoiceData.invoiceNumber, PDF.MARGIN_LEFT, invoiceNoY);
-
-                var dateText = "Date: " + invoiceData.date;
-                var dateWidth = doc.getTextWidth(dateText);
-                doc.text(dateText, PDF.DATE_X_RIGHT - dateWidth, invoiceNoY);
-
-                var infoY = invoiceNoY + PDF.INFO_LINE_HEIGHT;
-                if (invoiceData.dueDate) {
-                    doc.text("Due Date: " + invoiceData.dueDate, PDF.MARGIN_LEFT, infoY);
-                    infoY += PDF.INFO_LINE_HEIGHT;
-                }
-
-                if (invoiceData.poNumber.trim()) {
-                    doc.text("PO Number: " + invoiceData.poNumber, PDF.MARGIN_LEFT, infoY);
-                    infoY += PDF.INFO_LINE_HEIGHT;
-                }
-
-                if (invoiceData.taxDetail.trim()) {
-                    doc.text("Tax Detail: " + invoiceData.taxDetail, PDF.MARGIN_LEFT, infoY);
-                    infoY += PDF.INFO_LINE_HEIGHT;
-                }
-
-                doc.setFontSize(PDF.FROM_TO_LABEL_FONT_SIZE);
-                doc.setTextColor.apply(doc, headerColor);
-                doc.text("From:", PDF.FROM_X, infoY + PDF.FROM_TO_LABEL_Y_OFFSET);
-                doc.setTextColor(0, 0, 0);
-                doc.setFontSize(PDF.FROM_TO_TEXT_FONT_SIZE);
-                doc.text(invoiceData.sender.name, PDF.FROM_X, infoY + PDF.FROM_TO_NAME_Y_OFFSET);
-                var senderAddressLines = doc.splitTextToSize(invoiceData.sender.address, PDF.ADDR_WIDTH);
-                doc.text(senderAddressLines, PDF.FROM_X, infoY + PDF.FROM_TO_ADDR_Y_OFFSET);
-                var senderAddressHeight = senderAddressLines.length * PDF.ADDR_LINE_HEIGHT;
-                doc.text(invoiceData.sender.email, PDF.FROM_X, infoY + PDF.FROM_TO_ADDR_Y_OFFSET + senderAddressHeight);
-
-                doc.setFontSize(PDF.FROM_TO_LABEL_FONT_SIZE);
-                doc.setTextColor.apply(doc, headerColor);
-                doc.text("To:", PDF.TO_X, infoY + PDF.FROM_TO_LABEL_Y_OFFSET);
-                doc.setTextColor(0, 0, 0);
-                doc.setFontSize(PDF.FROM_TO_TEXT_FONT_SIZE);
-                doc.text(invoiceData.recipient.name, PDF.TO_X, infoY + PDF.FROM_TO_NAME_Y_OFFSET);
-                var recipientAddressLines = doc.splitTextToSize(invoiceData.recipient.address, PDF.ADDR_WIDTH);
-                doc.text(recipientAddressLines, PDF.TO_X, infoY + PDF.FROM_TO_ADDR_Y_OFFSET);
-                var recipientAddressHeight = recipientAddressLines.length * PDF.ADDR_LINE_HEIGHT;
-                doc.text(invoiceData.recipient.email, PDF.TO_X, infoY + PDF.FROM_TO_ADDR_Y_OFFSET + recipientAddressHeight);
-
-                var tableStartY = Math.max(PDF.TABLE_MIN_Y, infoY + PDF.TABLE_Y_OFFSET + Math.max(senderAddressHeight, recipientAddressHeight));
-                var adjustedTableStartY = tableStartY + PDF.TABLE_Y_OFFSET;
-
-                var headers = [["Description", "Quantity", "Rate", "Tax %", "Amount"]];
-                var rows = invoiceData.lineItems.map(function(item) {
-                    return [
-                        item.description,
-                        item.quantity,
-                        currencyDisplay + item.rate.toFixed(2),
-                        item.tax,
-                        currencyDisplay + item.amount.toFixed(2)
-                    ];
-                });
-
-                doc.autoTable({
-                    head: headers,
-                    body: rows,
-                    startY: adjustedTableStartY,
-                    theme: 'grid',
-                    headStyles: {
-                        fillColor: headerColor,
-                        textColor: [255, 255, 255]
-                    },
-                    styles: {
-                        cellPadding: PDF.TABLE_CELL_PADDING,
-                        fontSize: PDF.TABLE_FONT_SIZE
-                    }
-                });
-
-                var finalY = (doc.lastAutoTable && doc.lastAutoTable.finalY) || adjustedTableStartY + 40;
-                doc.setTextColor(0, 0, 0);
-                doc.setFontSize(PDF.FROM_TO_TEXT_FONT_SIZE);
-
-                var labelX = PDF.TOTALS_LABEL_X;
-                var valueX = PDF.TOTALS_VALUE_X;
-                var lineHeight = PDF.TOTALS_LINE_HEIGHT;
-
-                doc.text('Subtotal:', labelX, finalY + lineHeight);
-                var subtotalText = currencyDisplay + invoiceData.subtotal.toFixed(2);
-                doc.text(subtotalText, valueX - doc.getTextWidth(subtotalText), finalY + lineHeight);
-
-                doc.text('Total Tax:', labelX, finalY + (lineHeight * 2));
-                var taxText = currencyDisplay + invoiceData.totalTax.toFixed(2);
-                doc.text(taxText, valueX - doc.getTextWidth(taxText), finalY + (lineHeight * 2));
-
-                doc.text('Discount:', labelX, finalY + (lineHeight * 3));
-                var discountText = currencyDisplay + invoiceData.discount.toFixed(2);
-                doc.text(discountText, valueX - doc.getTextWidth(discountText), finalY + (lineHeight * 3));
-
-                doc.setFontSize(PDF.GRAND_TOTAL_FONT_SIZE);
-                doc.setTextColor.apply(doc, headerColor);
-                doc.text('Grand Total:', labelX, finalY + (lineHeight * 4));
-                var grandTotalText = currencyDisplay + invoiceData.grandTotal.toFixed(2);
-                doc.text(grandTotalText, valueX - doc.getTextWidth(grandTotalText), finalY + (lineHeight * 4));
-
-                if (invoiceData.notes.trim()) {
-                    var notesY = finalY + (lineHeight * 5) + PDF.NOTES_Y_OFFSET;
-                    doc.setFontSize(PDF.NOTES_LABEL_FONT_SIZE);
-                    doc.setTextColor.apply(doc, PDF.NOTES_TEXT_COLOR);
-                    doc.text("Notes / Terms:", PDF.MARGIN_LEFT, notesY);
-                    doc.setFontSize(PDF.NOTES_FONT_SIZE);
-                    var notesLines = doc.splitTextToSize(invoiceData.notes, PDF.NOTES_MAX_WIDTH);
-                    doc.text(notesLines, PDF.MARGIN_LEFT, notesY + PDF.NOTES_LINE_HEIGHT);
-                }
-
+                var t = translations[currentLang] || translations.en;
+                generatePDFContent(doc, t);
                 doc.save("invoice-" + invoiceData.invoiceNumber + ".pdf");
 
                 // Show success state

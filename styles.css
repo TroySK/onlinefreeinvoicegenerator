@@ -11,6 +11,7 @@
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
             --text-muted: #7c8ba1;
+            --input-color: #f1f5f9;
             --bg-page: #0f172a;
             --bg-surface: #1e293b;
             --bg-subtle: #334155;
@@ -40,6 +41,7 @@
             --text-primary: #0f172a;
             --text-secondary: #475569;
             --text-muted: #94a3b8;
+            --input-color: #0f172a;
             --bg-page: #f8fafc;
             --bg-surface: #ffffff;
             --bg-subtle: #f1f5f9;
@@ -166,6 +168,38 @@
             color: var(--success);
         }
 
+        .language-select {
+            margin: 0 12px;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.8125rem;
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .language-select:focus {
+            outline: none;
+            border-color: var(--border-focus);
+        }
+
+        .history-select {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .history-select:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+        }
+
         .theme-toggle {
             display: flex;
             align-items: center;
@@ -285,6 +319,7 @@
         }
         .due-date-row input[type="date"] {
             flex: 1;
+            color: var(--input-color);
         }
         .due-date-preset {
             padding: 10px 12px;
@@ -293,7 +328,7 @@
             font-family: var(--font-sans);
             font-size: 0.875rem;
             background: var(--bg-surface);
-            color: var(--text-primary);
+            color: var(--input-color);
             transition: all 0.15s ease;
             cursor: pointer;
             white-space: nowrap;
@@ -319,10 +354,25 @@
             border-radius: var(--radius-md);
             font-family: var(--font-sans);
             font-size: 0.9375rem;
-            color: var(--text-primary);
+            color: var(--input-color);
             background: var(--bg-surface);
             transition: all 0.15s ease;
         }
+
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 0.9375rem;
+            color: var(--input-color);
+            background: var(--bg-surface);
+            transition: all 0.15s ease;
+        }
+
+        .form-group select.status-select option[value="paid"] { color: #10b981; }
+        .form-group select.status-select option[value="overdue"] { color: #ef4444; }
 
         .form-group input::placeholder,
         .form-group textarea::placeholder {
@@ -452,6 +502,7 @@
             resize: vertical;
             min-height: 36px;
             transition: all 0.15s ease;
+            color: var(--input-color);
         }
 
         .line-items textarea:focus {
@@ -473,6 +524,7 @@
             -moz-appearance: textfield;
             text-align: right;
             transition: all 0.15s ease;
+            color: var(--input-color);
         }
 
         .line-items input[type="text"] {
@@ -545,6 +597,75 @@
             height: 18px;
         }
 
+        .bulk-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .bulk-action-btn {
+            padding: 6px 12px;
+            background: var(--bg-subtle);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.8125rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .bulk-action-btn:hover {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        /* Action Toolbar */
+        .action-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .action-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .action-btn-danger {
+            background: var(--danger);
+        }
+
+        .action-btn-danger:hover {
+            background: #c0392b;
+        }
+
         /* Totals Section */
         .totals-wrapper {
             display: flex;
@@ -577,6 +698,7 @@
             font-family: var(--font-sans);
             font-size: 0.9375rem;
             background: var(--bg-surface);
+            color: var(--input-color);
             text-align: right;
             transition: all 0.15s ease;
         }
@@ -711,6 +833,110 @@
         .logo-remove-btn:hover {
             color: var(--danger);
             border-color: var(--danger);
+        }
+
+        /* Payment Details */
+        .payment-details {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 16px;
+        }
+
+        .payment-details-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .payment-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .payment-grid .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Preview Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+        }
+
+        .modal.open {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            position: relative;
+            background: var(--bg-surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            flex: 1;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        #preview-iframe {
+            width: 100%;
+            height: 60vh;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+        }
+
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
         }
 
         /* Toast Notification */
