@@ -209,14 +209,27 @@
                 var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
                 var existingIndex = history.findIndex(function(h) { return h.invoiceNumber === data.invoiceNumber; });
                 if (existingIndex >= 0) {
-                    history[existingIndex] = { invoiceNumber: data.invoiceNumber, date: data.date, savedAt: data.savedAt };
+                    history[existingIndex] = { 
+                        invoiceNumber: data.invoiceNumber, 
+                        date: data.date, 
+                        savedAt: data.savedAt,
+                        grandTotal: data.subtotal + data.totalTax - data.discount,
+                        currency: data.currency
+                    };
                 } else {
-                    history.push({ invoiceNumber: data.invoiceNumber, date: data.date, savedAt: data.savedAt });
+                    history.push({ 
+                        invoiceNumber: data.invoiceNumber, 
+                        date: data.date, 
+                        savedAt: data.savedAt,
+                        grandTotal: data.subtotal + data.totalTax - data.discount,
+                        currency: data.currency
+                    });
                 }
                 // Keep only last 20 invoices
                 if (history.length > 20) history = history.slice(-20);
                 localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
                 updateHistoryDropdown();
+                updateSidebarList();
 
                 showSaveIndicator();
             } catch (e) {
@@ -950,6 +963,9 @@
             // Initialize history dropdown
             updateHistoryDropdown();
 
+            // Initialize sidebar
+            initSidebar();
+
             // Add event listeners to the first row
             attachRowListeners(lineItemsTable.rows[0], 0);
             
@@ -958,6 +974,271 @@
             
             // Apply initial template
             updateTemplate();
+        }
+
+        // Sidebar functionality
+        function initSidebar() {
+            var mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            var sidebar = document.getElementById('sidebar');
+            var sidebarList = document.getElementById('sidebar-list');
+            var sidebarSearch = document.getElementById('sidebar-search');
+            var clearHistoryBtn = document.getElementById('clear-history-btn');
+
+            // Mobile menu toggle
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    toggleMobileSidebar();
+                });
+            }
+
+            // Clear history button
+            if (clearHistoryBtn) {
+                clearHistoryBtn.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to clear all invoice history? This cannot be undone.')) {
+                        localStorage.removeItem(HISTORY_KEY);
+                        localStorage.removeItem(STORAGE_KEY);
+                        updateSidebarList();
+                        showToast('All history cleared', 'success');
+                    }
+                });
+            }
+
+            // Search functionality
+            if (sidebarSearch) {
+                sidebarSearch.addEventListener('input', function() {
+                    filterSidebarList(this.value);
+                });
+            }
+
+            // Initialize sidebar toggle
+            initSidebar();
+
+            // Check window size and set initial state
+            handleResize();
+            window.addEventListener('resize', handleResize);
+
+            // Initial population of sidebar
+            updateSidebarList();
+        }
+
+        function initSidebar() {
+            var sidebar = document.getElementById('sidebar');
+            var hamburgerToggle = document.getElementById('hamburger-toggle');
+            var mainWrapper = document.querySelector('.main-wrapper');
+
+            // Desktop: sidebar open by default
+            if (window.innerWidth >= 768) {
+                sidebar.classList.add('open');
+            }
+
+            // Hamburger toggle click
+            if (hamburgerToggle) {
+                hamburgerToggle.addEventListener('click', function() {
+                    toggleSidebar(sidebar, hamburgerToggle, mainWrapper);
+                });
+            }
+
+            // Sidebar close button click
+            var sidebarCloseBtn = document.getElementById('sidebar-close-btn');
+            if (sidebarCloseBtn) {
+                sidebarCloseBtn.addEventListener('click', function() {
+                    toggleSidebar(sidebar, hamburgerToggle, mainWrapper);
+                });
+            }
+
+            // Click on overlay to close sidebar (mobile)
+            var overlay = sidebar.querySelector('::before');
+            sidebar.addEventListener('click', function(e) {
+                if (e.target === sidebar && sidebar.classList.contains('open')) {
+                    if (window.innerWidth < 768) {
+                        toggleSidebar(sidebar, hamburgerToggle, mainWrapper);
+                    }
+                }
+            });
+        }
+
+        function toggleSidebar(sidebar, toggleBtn, mainWrapper) {
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                if (mainWrapper) {
+                    mainWrapper.classList.add('sidebar-closed');
+                }
+            } else {
+                sidebar.classList.add('open');
+                if (mainWrapper) {
+                    mainWrapper.classList.remove('sidebar-closed');
+                }
+            }
+        }
+
+        function handleResize() {
+            var sidebar = document.getElementById('sidebar');
+            var mainWrapper = document.querySelector('.main-wrapper');
+
+            if (window.innerWidth < 768) {
+                // Mobile - sidebar hidden by default
+                sidebar.classList.remove('open');
+                if (mainWrapper) {
+                    mainWrapper.classList.add('sidebar-closed');
+                }
+            } else {
+                // Desktop - sidebar open by default
+                sidebar.classList.add('open');
+                if (mainWrapper) {
+                    mainWrapper.classList.remove('sidebar-closed');
+                }
+            }
+        }
+
+        function toggleMobileSidebar() {
+            var sidebar = document.getElementById('sidebar');
+            var mainWrapper = document.querySelector('.main-wrapper');
+
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                if (mainWrapper) {
+                    mainWrapper.classList.add('sidebar-closed');
+                }
+            } else {
+                sidebar.classList.add('open');
+                if (mainWrapper) {
+                    mainWrapper.classList.remove('sidebar-closed');
+                }
+            }
+        }
+
+        function updateSidebarList() {
+            var sidebarList = document.getElementById('sidebar-list');
+            if (!sidebarList) return;
+
+            var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            
+            if (history.length === 0) {
+                sidebarList.innerHTML = '<div class="sidebar-empty">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
+                    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>' +
+                    '<polyline points="14 2 14 8 20 8"></polyline>' +
+                    '<line x1="12" y1="18" x2="12" y2="12"></line>' +
+                    '<line x1="9" y1="15" x2="15" y2="15"></line>' +
+                    '</svg>' +
+                    '<p>No saved invoices yet.<br>Your invoice history will appear here.</p>' +
+                    '</div>';
+                return;
+            }
+
+            // Sort by savedAt, most recent first
+            history.sort(function(a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
+
+            var html = '';
+            history.forEach(function(item) {
+                var savedDate = item.savedAt ? new Date(item.savedAt) : new Date();
+                var dateStr = savedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                var amount = item.grandTotal ? getCurrencyDisplay(item.currency || 'USD') + item.grandTotal.toFixed(2) : '';
+                
+                html += '<div class="sidebar-item" data-invoice="' + item.invoiceNumber + '" onclick="loadFromHistorySidebar(\'' + item.invoiceNumber + '\')">' +
+                    '<div class="sidebar-item-icon">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>' +
+                    '<polyline points="14 2 14 8 20 8"></polyline>' +
+                    '</svg>' +
+                    '</div>' +
+                    '<div class="sidebar-item-content">' +
+                    '<div class="sidebar-item-title">' + item.invoiceNumber + '</div>' +
+                    '<div class="sidebar-item-meta">' +
+                    '<span>' + (item.date || dateStr) + '</span>';
+                
+                if (amount) {
+                    html += '<span class="sidebar-item-amount">' + amount + '</span>';
+                }
+                
+                html += '</div>' +
+                    '</div>' +
+                    '<button class="sidebar-item-delete" onclick="event.stopPropagation(); deleteFromHistory(\'' + item.invoiceNumber + '\')" aria-label="Delete invoice">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">' +
+                    '<polyline points="3 6 5 6 21 6"></polyline>' +
+                    '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>' +
+                    '</svg>' +
+                    '</button>' +
+                    '</div>';
+            });
+
+            sidebarList.innerHTML = html;
+        }
+
+        function loadFromHistorySidebar(invoiceNumber) {
+            // Save current invoice first
+            syncFromDOM();
+            saveInvoiceData();
+
+            // Load invoice data from localStorage
+            var saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                var data = JSON.parse(saved);
+                if (data.invoiceNumber === invoiceNumber) {
+                    loadInvoiceData();
+                    syncToDOM();
+                    calculateTotals();
+                    updateTemplate();
+                    
+                    // Update active state in sidebar
+                    document.querySelectorAll('.sidebar-item').forEach(function(item) {
+                        item.classList.remove('active');
+                    });
+                    var activeItem = document.querySelector('.sidebar-item[data-invoice="' + invoiceNumber + '"]');
+                    if (activeItem) {
+                        activeItem.classList.add('active');
+                    }
+
+                    showToast('Loaded: ' + invoiceNumber, 'success');
+                    
+                    // Close sidebar on mobile
+                    if (window.innerWidth < 768) {
+                        toggleMobileSidebar();
+                    }
+                } else {
+                    showToast('Invoice not found in storage', 'error');
+                }
+            } else {
+                showToast('No invoice data found', 'error');
+            }
+        }
+
+        function deleteFromHistory(invoiceNumber) {
+            if (!confirm('Delete invoice ' + invoiceNumber + '? This cannot be undone.')) {
+                return;
+            }
+
+            var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            history = history.filter(function(h) { return h.invoiceNumber !== invoiceNumber; });
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+
+            // If deleting current invoice, clear storage
+            var currentData = localStorage.getItem(STORAGE_KEY);
+            if (currentData) {
+                var data = JSON.parse(currentData);
+                if (data.invoiceNumber === invoiceNumber) {
+                    localStorage.removeItem(STORAGE_KEY);
+                }
+            }
+
+            updateSidebarList();
+            showToast('Invoice deleted', 'success');
+        }
+
+        function filterSidebarList(query) {
+            var items = document.querySelectorAll('.sidebar-item');
+            query = query.toLowerCase();
+
+            items.forEach(function(item) {
+                var title = item.querySelector('.sidebar-item-title').textContent.toLowerCase();
+                var meta = item.querySelector('.sidebar-item-meta').textContent.toLowerCase();
+                
+                if (title.includes(query) || meta.includes(query)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
         }
 
         // Validate a field
