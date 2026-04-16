@@ -76,29 +76,31 @@
                 <span class="navbar-title">Invoice Generator</span>
                 <span class="navbar-badge">Free</span>
             </a>
-            <span class="save-status" id="save-status" aria-live="polite"></span>
-            <select id="language-select" class="language-select" aria-label="Select language">
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="fr">Français</option>
-                <option value="de">Deutsch</option>
-            </select>
-            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-                <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </svg>
-                <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                </svg>
-            </button>
+            <div class="navbar-controls">
+                <span class="save-status" id="save-status" aria-live="polite"></span>
+                <select id="language-select" class="language-select" aria-label="Select language">
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                </select>
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+                    <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -108,6 +110,35 @@
                 <h1>Create <span>Professional Invoices</span> in Seconds</h1>
                 <p>No signup required. Fill in your details, customize, and download PDF invoices instantly.</p>
             </section>
+
+            <div class="template-section">
+                <div class="template-header">
+                    <span class="template-title">Choose Template</span>
+                </div>
+                <div class="template-options">
+                    <div class="template-option template-modern1">
+                        <input type="radio" name="template" id="template-modern" value="modern1" checked>
+                        <label for="template-modern">
+                            <div class="template-icon">M</div>
+                            <span>Modern</span>
+                        </label>
+                    </div>
+                    <div class="template-option template-classic">
+                        <input type="radio" name="template" id="template-classic" value="classic">
+                        <label for="template-classic">
+                            <div class="template-icon">C</div>
+                            <span>Classic</span>
+                        </label>
+                    </div>
+                    <div class="template-option template-business">
+                        <input type="radio" name="template" id="template-business" value="business">
+                        <label for="template-business">
+                            <div class="template-icon">P</div>
+                            <span>Professional</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
 
             <div class="invoice-card" id="invoice-container">
                 <div class="card-section">
@@ -397,22 +428,21 @@
 
                 <!-- Action Buttons -->
                 <div class="action-toolbar">
-                    <button type="button" id="preview-btn" class="action-btn">
+                    <button type="button" id="preview-btn" class="action-btn action-btn-secondary">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                             <circle cx="12" cy="12" r="3"></circle>
                         </svg>
                         Preview
                     </button>
-                    <button type="button" id="download-btn" class="action-btn">
+                    <button type="button" id="duplicate-btn" class="action-btn action-btn-secondary">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                         </svg>
-                        Download PDF
+                        Duplicate
                     </button>
-                    <button type="button" id="share-btn" class="action-btn">
+                    <button type="button" id="share-btn" class="action-btn action-btn-secondary">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="18" cy="5" r="3"></circle>
                             <circle cx="6" cy="12" r="3"></circle>
@@ -422,19 +452,20 @@
                         </svg>
                         Share
                     </button>
-                    <button type="button" id="duplicate-btn" class="action-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
-                        Duplicate
-                    </button>
                     <button type="button" id="clear-btn" class="action-btn action-btn-danger">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         </svg>
                         Clear
+                    </button>
+                    <button type="button" id="download-btn" class="action-btn action-btn-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Download PDF
                     </button>
                 </div>
 
