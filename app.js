@@ -53,7 +53,7 @@
                 notesTerms: "Notes & Terms", notesPlaceholder: "Payment is due within 30 days. Thank you for your business!",
                 companyLogo: "Company Logo (optional)", logoUpload: "Click to upload logo (PNG, JPG, GIF, WebP — max 2MB)",
                 chooseTemplate: "Choose Template", modern: "Modern", classic: "Classic", professional: "Professional",
-                downloadPdf: "Download PDF", clear: "Clear", duplicate: "Duplicate", share: "Share",
+                downloadPdf: "Download PDF", clear: "Clear", duplicate: "Duplicate", share: "Share", saveInvoice: "Save Invoice",
                 paymentDetails: "Payment Details (optional)", bankName: "Bank Name / Account", paypalLabel: "PayPal", paymentLink: "Payment Link (Stripe, etc.)",
                 termsReceipt: "Upon Receipt", termsNet7: "Net 7", termsNet14: "Net 14", termsNet15: "Net 15", termsNet30: "Net 30",
                 termsNet45: "Net 45", termsNet60: "Net 60", termsNet90: "Net 90",
@@ -170,6 +170,10 @@
         const COUNTER_KEY = "invoice_counter";
         const HISTORY_KEY = "invoice_history";
 
+        function getInvoiceStorageKey(invoiceNumber) {
+            return "invoice_" + invoiceNumber;
+        }
+
         function getNextInvoiceNumber() {
             try {
                 var counter = parseInt(localStorage.getItem(COUNTER_KEY)) || 0;
@@ -204,6 +208,7 @@
                     savedAt: Date.now()
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                localStorage.setItem(getInvoiceStorageKey(data.invoiceNumber), JSON.stringify(data));
 
                 // Update history
                 var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
@@ -259,12 +264,13 @@
             // Save current invoice to history before switching (if it has data)
             saveInvoiceData();
 
-            // Load the selected invoice from main storage (it was saved there too)
-            var saved = localStorage.getItem(STORAGE_KEY);
+            // Load the selected invoice from its individual storage key
+            var storageKey = getInvoiceStorageKey(invoiceNumber);
+            var saved = localStorage.getItem(storageKey);
             if (saved) {
                 var data = JSON.parse(saved);
                 if (data.invoiceNumber === invoiceNumber) {
-                    loadInvoiceData();
+                    loadInvoiceData(invoiceNumber);
                     syncToDOM();
                     calculateTotals();
                     showToast('Loaded invoice: ' + invoiceNumber, 'success');
@@ -284,9 +290,10 @@
             }, 2000);
         }
 
-        function loadInvoiceData() {
+        function loadInvoiceData(invoiceNumber) {
             try {
-                var saved = localStorage.getItem(STORAGE_KEY);
+                var storageKey = invoiceNumber ? getInvoiceStorageKey(invoiceNumber) : STORAGE_KEY;
+                var saved = localStorage.getItem(storageKey);
                 if (!saved) return false;
 
                 var data = JSON.parse(saved);
@@ -347,6 +354,7 @@
         const clearBtn = document.getElementById('clear-btn');
         const duplicateBtn = document.getElementById('duplicate-btn');
         const shareBtn = document.getElementById('share-btn');
+        const saveBtn = document.getElementById('save-btn');
         const previewBtn = document.getElementById('preview-btn');
         const lineItemsTable = document.getElementById('line-items').getElementsByTagName('tbody')[0];
 
@@ -643,24 +651,47 @@
             // Restore saved data into DOM
             syncToDOM();
 
-            // Use syncFromDOM on all form input changes, then save
-            var formContainer = document.getElementById('invoice-container');
-            formContainer.addEventListener('input', function(e) {
+            // Field behavior configuration
+            var fieldConfig = {
+                validationFields: ['sender-name', 'sender-address', 'sender-email', 'recipient-name', 'recipient-address', 'recipient-email'],
+                invoiceMetaFields: ['invoice-number', 'invoice-date'],
+                totalsFields: ['discount'],
+                saveFields: ['po-number', 'tax-detail', 'notes', 'due-date', 'payment-bank', 'payment-paypal', 'payment-link']
+            };
+
+            // Input: sync and validate only (no save)
+            invoiceContainer.addEventListener('input', function(e) {
                 syncFromDOM();
-                // Run validation for relevant fields
-                if (e.target.id === 'sender-name') validateField('sender', 'name', e.target.value);
-                else if (e.target.id === 'sender-address') validateField('sender', 'address', e.target.value);
-                else if (e.target.id === 'sender-email') validateField('sender', 'email', e.target.value);
-                else if (e.target.id === 'recipient-name') validateField('recipient', 'name', e.target.value);
-                else if (e.target.id === 'recipient-address') validateField('recipient', 'address', e.target.value);
-                else if (e.target.id === 'recipient-email') validateField('recipient', 'email', e.target.value);
-                else if (e.target.id === 'invoice-number') validateField('invoiceNumber', null, e.target.value);
-                else if (e.target.id === 'invoice-date') validateField('date', null, e.target.value);
-                else if (e.target.id === 'discount') calculateTotals();
-                saveInvoiceData();
+                if (fieldConfig.validationFields.includes(e.target.id)) {
+                    validateField(e.target.id.includes('sender') ? 'sender' : 'recipient',
+                        e.target.id.includes('name') ? 'name' : e.target.id.includes('email') ? 'email' : 'address',
+                        e.target.value);
+                }
             });
 
-            formContainer.addEventListener('change', function(e) {
+            // Focus out: sync, validate, save based on field type
+            invoiceContainer.addEventListener('focusout', function(e) {
+                syncFromDOM();
+
+                if (fieldConfig.invoiceMetaFields.includes(e.target.id)) {
+                    if (e.target.id === 'invoice-number') validateField('invoiceNumber', null, e.target.value);
+                    if (e.target.id === 'invoice-date') validateField('date', null, e.target.value);
+                    saveInvoiceData();
+                } else if (fieldConfig.totalsFields.includes(e.target.id)) {
+                    _calculateTotals();
+                } else if (fieldConfig.validationFields.includes(e.target.id) || fieldConfig.saveFields.includes(e.target.id)) {
+                    saveInvoiceData();
+                }
+            });
+
+            // Direct listener for discount field
+            document.getElementById('discount').addEventListener('blur', function() {
+                syncFromDOM();
+                _calculateTotals();
+            });
+
+            // Change events (dropdowns, selects)
+            invoiceContainer.addEventListener('change', function(e) {
                 if (e.target.id === 'currency-select') {
                     syncFromDOM();
                     updateLineItemCurrency();
@@ -703,7 +734,7 @@
             });
 
             // Rate auto-format (delegated)
-            formContainer.addEventListener('blur', function(e) {
+            invoiceContainer.addEventListener('blur', function(e) {
                 if (e.target.classList.contains('item-rate')) {
                     var val = parseFloat(e.target.value);
                     if (!isNaN(val) && val > 0) {
@@ -711,7 +742,7 @@
                     }
                 }
             }, true);
-            formContainer.addEventListener('focus', function(e) {
+            invoiceContainer.addEventListener('focus', function(e) {
                 if (e.target.classList.contains('item-rate')) {
                     var val = parseFloat(e.target.value);
                     if (!isNaN(val)) {
@@ -850,6 +881,14 @@
                 saveInvoiceData();
                 showToast('Invoice duplicated. Update recipient and download.', 'success');
             });
+
+            if (saveBtn) saveBtn.addEventListener('click', function() {
+                syncFromDOM();
+                _calculateTotals();
+                saveInvoiceData();
+                showToast('Invoice saved.', 'success');
+            });
+
             if (shareBtn) shareBtn.addEventListener('click', function() {
                 syncFromDOM();
                 _calculateTotals();
@@ -1126,8 +1165,9 @@
                 return;
             }
 
-            // Sort by savedAt, most recent first
-            history.sort(function(a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
+            // Sort by invoice date, most recent first (descending)
+            history.sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); });
+            history.reverse();
 
             var html = '';
             history.forEach(function(item) {
@@ -1170,16 +1210,17 @@
             syncFromDOM();
             saveInvoiceData();
 
-            // Load invoice data from localStorage
-            var saved = localStorage.getItem(STORAGE_KEY);
+            // Load invoice data from its individual storage key
+            var storageKey = getInvoiceStorageKey(invoiceNumber);
+            var saved = localStorage.getItem(storageKey);
             if (saved) {
                 var data = JSON.parse(saved);
                 if (data.invoiceNumber === invoiceNumber) {
-                    loadInvoiceData();
+                    loadInvoiceData(invoiceNumber);
                     syncToDOM();
                     calculateTotals();
                     updateTemplate();
-                    
+
                     // Update active state in sidebar
                     document.querySelectorAll('.sidebar-item').forEach(function(item) {
                         item.classList.remove('active');
@@ -1190,7 +1231,7 @@
                     }
 
                     showToast('Loaded: ' + invoiceNumber, 'success');
-                    
+
                     // Close sidebar on mobile
                     if (window.innerWidth < 768) {
                         toggleMobileSidebar();
@@ -1211,6 +1252,9 @@
             var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
             history = history.filter(function(h) { return h.invoiceNumber !== invoiceNumber; });
             localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+
+            // Delete the individual invoice storage
+            localStorage.removeItem(getInvoiceStorageKey(invoiceNumber));
 
             // If deleting current invoice, clear storage
             var currentData = localStorage.getItem(STORAGE_KEY);
@@ -1389,6 +1433,9 @@
             var shareBtn = document.getElementById('share-btn');
             if (shareBtn) shareBtn.innerHTML = getIcon('share') + ' ' + t.share;
 
+            var saveBtn = document.getElementById('save-btn');
+            if (saveBtn) saveBtn.innerHTML = getIcon('save') + ' ' + t.saveInvoice;
+
             // Update template labels
             var templateLabels = document.querySelectorAll('.template-option span');
             if (templateLabels[0]) templateLabels[0].textContent = t.modern;
@@ -1450,7 +1497,8 @@
                 'download': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
                 'trash': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>',
                 'copy': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
-                'share': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>'
+                'share': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>',
+                'save': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>'
             };
             return icons[type] || '';
         }
@@ -1663,7 +1711,7 @@
             item.taxAmount = parseFloat(taxAmount.toFixed(2));
 
             updateLineItemUI(index);
-            calculateTotals();
+            _calculateTotals();
         }
 
         function updateLineItemUI(index) {
@@ -1720,7 +1768,6 @@
             var maxDiscount = invoiceData.subtotal + invoiceData.totalTax;
             if (invoiceData.discount > maxDiscount) {
                 invoiceData.discount = maxDiscount;
-                document.getElementById('discount').value = maxDiscount.toFixed(2);
             }
 
             // Calculate grand total (never negative)
@@ -1728,8 +1775,13 @@
                 Math.max(0, invoiceData.subtotal + invoiceData.totalTax - invoiceData.discount).toFixed(2)
             );
 
-            // Update UI
-            updateCurrencyDisplay();
+            // Update UI directly
+            var currencyDisplay = getCurrencyDisplay(invoiceData.currency);
+            document.getElementById('subtotal').textContent = currencyDisplay + invoiceData.subtotal.toFixed(2);
+            document.getElementById('total-tax').textContent = currencyDisplay + invoiceData.totalTax.toFixed(2);
+            document.getElementById('grand-total').textContent = currencyDisplay + invoiceData.grandTotal.toFixed(2);
+            document.getElementById('discount').value = invoiceData.discount.toFixed(2);
+
             saveInvoiceData();
         }
 
@@ -1746,6 +1798,7 @@
             document.getElementById('subtotal').textContent = currencyDisplay + invoiceData.subtotal.toFixed(2);
             document.getElementById('total-tax').textContent = currencyDisplay + invoiceData.totalTax.toFixed(2);
             document.getElementById('grand-total').textContent = currencyDisplay + invoiceData.grandTotal.toFixed(2);
+            document.getElementById('discount').value = invoiceData.discount.toFixed(2);
         }
 
         // Update line item currency display (only called when currency changes)
