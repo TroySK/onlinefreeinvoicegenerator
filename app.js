@@ -1015,55 +1015,13 @@ function init() {
     updateTemplate();
 }
 
-// Sidebar functionality
-function initSidebar() {
-    var mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-    var sidebar = document.getElementById('sidebar');
-    var sidebarList = document.getElementById('sidebar-list');
-    var sidebarSearch = document.getElementById('sidebar-search');
-    var clearHistoryBtn = document.getElementById('clear-history-btn');
-
-    // Mobile menu toggle
-    if (mobileMenuToggle) {
-        mobileMenuToggle.addEventListener('click', function() {
-            toggleMobileSidebar();
-        });
-    }
-
-    // Clear history button
-    if (clearHistoryBtn) {
-        clearHistoryBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to clear all invoice history? This cannot be undone.')) {
-                localStorage.removeItem(HISTORY_KEY);
-                localStorage.removeItem(STORAGE_KEY);
-                updateSidebarList();
-                showToast('All history cleared', 'success');
-            }
-        });
-    }
-
-    // Search functionality
-    if (sidebarSearch) {
-        sidebarSearch.addEventListener('input', function() {
-            filterSidebarList(this.value);
-        });
-    }
-
-    // Initialize sidebar toggle
-    initSidebar();
-
-    // Check window size and set initial state
-    handleResize();
-    window.addEventListener('resize', handleResize);
-
-    // Initial population of sidebar
-    updateSidebarList();
-}
-
 function initSidebar() {
     var sidebar = document.getElementById('sidebar');
     var hamburgerToggle = document.getElementById('hamburger-toggle');
     var mainWrapper = document.querySelector('.main-wrapper');
+    var sidebarSearch = document.getElementById('sidebar-search');
+    var clearHistoryBtn = document.getElementById('clear-history-btn');
+
 
     // Desktop: sidebar open by default
     if (window.innerWidth >= 768) {
@@ -1094,6 +1052,26 @@ function initSidebar() {
             }
         }
     });
+
+    // Clear history button
+    if (clearHistoryBtn) {
+        clearHistoryBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear all invoice history? This cannot be undone.')) {
+                localStorage.removeItem(HISTORY_KEY);
+                localStorage.removeItem(STORAGE_KEY);
+                updateSidebarList();
+                showToast('All history cleared', 'success');
+            }
+        });
+    }
+
+    // Search functionality
+    if (sidebarSearch) {
+        sidebarSearch.addEventListener('input', function() {
+            filterSidebarList(this.value);
+        });
+    }
+
 }
 
 function toggleSidebar(sidebar, toggleBtn, mainWrapper) {
