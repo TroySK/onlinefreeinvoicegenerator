@@ -319,7 +319,7 @@ body {
     border-top: 1px solid var(--border);
 }
 
-.sidebar-clear-btn {
+.sidebar-action-btn {
     width: 100%;
     display: flex;
     align-items: center;
@@ -334,17 +334,28 @@ body {
     color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);
+    margin: 16px 0;
 }
 
-.sidebar-clear-btn:hover {
+.sidebar-action-btn:hover {
+    background: rgba(79, 70, 229, 0.1);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.sidebar-action-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.sidebar-action-btn-danger {
+    margin-top: 8px;
+}
+
+.sidebar-action-btn-danger:hover {
     background: rgba(239, 68, 68, 0.1);
     border-color: var(--danger);
     color: var(--danger);
-}
-
-.sidebar-clear-btn svg {
-    width: 16px;
-    height: 16px;
 }
 
 /* Hamburger Toggle - inside navbar */

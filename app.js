@@ -230,8 +230,8 @@ function saveInvoiceData() {
                 currency: data.currency
             });
         }
-        // Keep only last 20 invoices
-        if (history.length > 20) history = history.slice(-20);
+        // Keep only last 50 invoices (most recent)
+        if (history.length > 50) history = history.slice(-50);
         localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
         updateHistoryDropdown();
         updateSidebarList();
@@ -244,11 +244,142 @@ function saveInvoiceData() {
     }
 }
 
+function exportBackup() {
+    try {
+        var invoices = [];
+        var counter = localStorage.getItem(COUNTER_KEY) || '0';
+
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key && key.startsWith('invoice_INV-')) {
+                var saved = localStorage.getItem(key);
+                if (saved) {
+                    invoices.push(JSON.parse(saved));
+                }
+            }
+        }
+
+        invoices.sort(function(a, b) {
+            return (a.savedAt || 0) - (b.savedAt || 0);
+        });
+
+        var backup = {
+            version: '1.0',
+            exportedAt: Date.now(),
+            counter: counter,
+            invoices: invoices
+        };
+
+        var blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'invoice-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('Exported ' + invoices.length + ' invoices', 'success');
+    } catch (e) {
+        console.error('Export error:', e);
+        showToast('Export failed', 'error');
+    }
+}
+
+function importBackup(file) {
+    try {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                var backup = JSON.parse(e.target.result);
+                if (!backup.version || !backup.invoices) {
+                    showToast('Invalid backup file', 'error');
+                    return;
+                }
+
+                var imported = 0;
+                var skipped = 0;
+
+                backup.invoices.forEach(function(invoice) {
+                    if (invoice.invoiceNumber) {
+                        var existing = localStorage.getItem(getInvoiceStorageKey(invoice.invoiceNumber));
+                        if (existing) {
+                            skipped++;
+                        } else {
+                            localStorage.setItem(getInvoiceStorageKey(invoice.invoiceNumber), JSON.stringify(invoice));
+                            imported++;
+                        }
+                    }
+                });
+
+                if (backup.counter) {
+                    var currentCounter = parseInt(localStorage.getItem(COUNTER_KEY) || '0');
+                    var newCounter = parseInt(backup.counter);
+                    if (newCounter > currentCounter) {
+                        localStorage.setItem(COUNTER_KEY, backup.counter.toString());
+                    }
+                }
+
+                var history = [];
+                for (var i = 0; i < localStorage.length; i++) {
+                    var key = localStorage.key(i);
+                    if (key && key.startsWith('invoice_INV-')) {
+                        var saved = localStorage.getItem(key);
+                        if (saved) {
+                            var inv = JSON.parse(saved);
+                            history.push({
+                                invoiceNumber: inv.invoiceNumber,
+                                date: inv.date,
+                                savedAt: inv.savedAt,
+                                grandTotal: (inv.subtotal || 0) + (inv.totalTax || 0) - (inv.discount || 0),
+                                currency: inv.currency
+                            });
+                        }
+                    }
+                }
+                history.sort(function(a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
+                if (history.length > 50) history = history.slice(-50);
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+
+                updateHistoryDropdown();
+                updateSidebarList();
+                showToast('Imported ' + imported + ' invoices' + (skipped > 0 ? ', ' + skipped + ' skipped' : ''), 'success');
+            } catch (err) {
+                console.error('Import parse error:', err);
+                showToast('Invalid backup format', 'error');
+            }
+        };
+        reader.readAsText(file);
+    } catch (e) {
+        console.error('Import error:', e);
+        showToast('Import failed', 'error');
+    }
+}
+
 function updateHistoryDropdown() {
-    var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    var history = [];
+    for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (key && key.startsWith('invoice_INV-')) {
+            var saved = localStorage.getItem(key);
+            if (saved) {
+                var inv = JSON.parse(saved);
+                history.push({
+                    invoiceNumber: inv.invoiceNumber,
+                    date: inv.date,
+                    savedAt: inv.savedAt,
+                    grandTotal: (inv.subtotal || 0) + (inv.totalTax || 0) - (inv.discount || 0),
+                    currency: inv.currency
+                });
+            }
+        }
+    }
+    history.sort(function(a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
+
     var select = document.getElementById('invoice-history');
     select.innerHTML = '<option value="">-- Select saved invoice --</option>';
-    history.reverse().forEach(function(item) {
+    history.forEach(function(item) {
         var opt = document.createElement('option');
         opt.value = item.invoiceNumber;
         opt.textContent = item.invoiceNumber + ' (' + item.date + ')';
@@ -356,6 +487,9 @@ const duplicateBtn = document.getElementById('duplicate-btn');
 const shareBtn = document.getElementById('share-btn');
 const saveBtn = document.getElementById('save-btn');
 const previewBtn = document.getElementById('preview-btn');
+const exportBtn = document.getElementById('export-btn');
+const importBtn = document.getElementById('import-btn');
+const importFile = document.getElementById('import-file');
 const lineItemsTable = document.getElementById('line-items').getElementsByTagName('tbody')[0];
 
 // Sync data model from DOM (reads all form values into invoiceData)
@@ -931,6 +1065,24 @@ function init() {
             window.location.href = mailtoLink;
         }
     });
+
+    if (exportBtn) exportBtn.addEventListener('click', function() {
+        syncFromDOM();
+        _calculateTotals();
+        exportBackup();
+    });
+
+    if (importBtn) importBtn.addEventListener('click', function() {
+        importFile.click();
+    });
+
+    if (importFile) importFile.addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+            importBackup(e.target.files[0]);
+            e.target.value = '';
+        }
+    });
+
     if (previewBtn) previewBtn.addEventListener('click', function() {
         syncFromDOM();
         _calculateTotals();
@@ -1128,8 +1280,24 @@ function updateSidebarList() {
     var sidebarList = document.getElementById('sidebar-list');
     if (!sidebarList) return;
 
-    var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-    
+    var history = [];
+    for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (key && key.startsWith('invoice_INV-')) {
+            var saved = localStorage.getItem(key);
+            if (saved) {
+                var inv = JSON.parse(saved);
+                history.push({
+                    invoiceNumber: inv.invoiceNumber,
+                    date: inv.date,
+                    savedAt: inv.savedAt,
+                    grandTotal: (inv.subtotal || 0) + (inv.totalTax || 0) - (inv.discount || 0),
+                    currency: inv.currency
+                });
+            }
+        }
+    }
+
     if (history.length === 0) {
         sidebarList.innerHTML = '<div class="sidebar-empty">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +

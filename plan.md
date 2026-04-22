@@ -2,6 +2,34 @@
 
 ---
 
+## Planned Features (Not Yet Implemented)
+
+### High Priority
+- ✅ Export/Import Backup — JSON export of all invoices for backup/restore
+- CSV Line Item Export — Export line items to CSV for accounting
+- Default Sender Profile — Save your business details as defaults
+- Client Management — Save frequently used clients/recipients
+- Auto-save Draft — Draft auto-save while editing
+
+### Medium Priority
+- Multi-page PDF — Handle invoices with many line items
+- Late Fee Calculator — Auto-calculate late fees based on due date
+- Payment Status Automation — Mark overdue automatically based on current date
+- Invoice Duplicate — Duplicate existing invoice to history
+- Drag-reorder Line Items — Reorder line items via drag & drop
+
+### Lower Priority
+- More Templates — Add minimalist/creative templates
+- QR Code in PDF — QR code with payment link or invoice summary
+- Custom Fonts in PDF — Use custom fonts in generated PDF
+- Watermark Option — Add "DRAFT" or "PAID" watermark
+- PWA Support — Full offline functionality (Service Worker)
+- More Keyboard Shortcuts — Additional shortcuts (add line item, toggle theme)
+- Bulk Delete History — Select and delete multiple invoices
+- Unlimited History — Paginate history instead of localStorage limit
+
+---
+
 ## ALL ITEMS COMPLETED ✅
 
 ### P0 — Critical Bugs

@@ -85,12 +85,29 @@
             <!-- Invoice items will be populated by JavaScript -->
         </div>
         <div class="sidebar-footer">
-            <button type="button" id="clear-history-btn" class="sidebar-clear-btn">
+            <button type="button" id="export-btn" class="sidebar-action-btn" title="Export all invoices as JSON">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Export All
+            </button>
+            <input type="file" id="import-file" accept=".json" style="display:none">
+            <button type="button" id="import-btn" class="sidebar-action-btn" title="Import invoices from JSON backup">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Import
+            </button>
+            <button type="button" id="clear-history-btn" class="sidebar-action-btn sidebar-action-btn-danger" title="Clear all invoice history">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="3 6 5 6 21 6"></polyline>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                 </svg>
-                Clear All History
+                Clear All
             </button>
         </div>
     </aside>
