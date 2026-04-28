@@ -31,6 +31,7 @@ const invoiceData = {
     subtotal: 0.0,
     totalTax: 0.0,
     discount: 0.0,
+    discountType: "flat",
     grandTotal: 0.0,
     status: "",
     paymentDetails: {
@@ -221,6 +222,7 @@ function saveInvoiceData() {
                 return { ...item };
             }),
             discount: invoiceData.discount,
+            discountType: invoiceData.discountType,
             template: invoiceData.template,
             status: invoiceData.status,
             paymentDetails: invoiceData.paymentDetails,
@@ -461,6 +463,7 @@ function loadInvoiceData(invoiceNumber) {
             invoiceData.lineItems = data.lineItems;
         }
         if (typeof data.discount === "number") invoiceData.discount = data.discount;
+        if (data.discountType) invoiceData.discountType = data.discountType;
         if (data.template) invoiceData.template = data.template;
         if (data.status) invoiceData.status = data.status;
         if (data.paymentDetails) invoiceData.paymentDetails = data.paymentDetails;
@@ -527,6 +530,7 @@ function syncFromDOM() {
     invoiceData.taxDetail = document.getElementById('tax-detail').value;
     invoiceData.notes = document.getElementById('notes').value;
     invoiceData.discount = Math.max(0, parseFloat(document.getElementById('discount').value) || 0);
+    invoiceData.discountType = document.getElementById('discount-type').value;
     invoiceData.status = document.getElementById('invoice-status').value;
     invoiceData.paymentDetails = {
         bank: document.getElementById('payment-bank').value,
@@ -572,6 +576,7 @@ function syncToDOM() {
     document.getElementById('tax-detail').value = invoiceData.taxDetail || '';
     document.getElementById('notes').value = invoiceData.notes || '';
     document.getElementById('discount').value = invoiceData.discount || '';
+    document.getElementById('discount-type').value = invoiceData.discountType || 'flat';
     document.getElementById('invoice-status').value = invoiceData.status || '';
     if (invoiceData.paymentDetails) {
         document.getElementById('payment-bank').value = invoiceData.paymentDetails.bank || '';
@@ -840,6 +845,12 @@ function init() {
 
     // Direct listener for discount field
     document.getElementById('discount').addEventListener('blur', function() {
+        syncFromDOM();
+        _calculateTotals();
+    });
+
+    // Discount type change
+    document.getElementById('discount-type').addEventListener('change', function() {
         syncFromDOM();
         _calculateTotals();
     });
@@ -1932,14 +1943,22 @@ function _calculateTotals() {
 
     // Clamp discount to prevent negative grand total
     invoiceData.discount = Math.max(0, invoiceData.discount);
+
+    // Convert percentage discount to flat amount for calculation
+    var effectiveDiscount = invoiceData.discount;
+    var baseForDiscount = invoiceData.subtotal + invoiceData.totalTax;
+    if (invoiceData.discountType === 'percent') {
+        effectiveDiscount = baseForDiscount * (invoiceData.discount / 100);
+    }
+
     var maxDiscount = invoiceData.subtotal + invoiceData.totalTax;
-    if (invoiceData.discount > maxDiscount) {
-        invoiceData.discount = maxDiscount;
+    if (effectiveDiscount > maxDiscount) {
+        effectiveDiscount = maxDiscount;
     }
 
     // Calculate grand total (never negative)
     invoiceData.grandTotal = parseFloat(
-        Math.max(0, invoiceData.subtotal + invoiceData.totalTax - invoiceData.discount).toFixed(2)
+        Math.max(0, invoiceData.subtotal + invoiceData.totalTax - effectiveDiscount).toFixed(2)
     );
 
     // Update UI directly
@@ -1947,7 +1966,7 @@ function _calculateTotals() {
     document.getElementById('subtotal').textContent = currencyDisplay + invoiceData.subtotal.toFixed(2);
     document.getElementById('total-tax').textContent = currencyDisplay + invoiceData.totalTax.toFixed(2);
     document.getElementById('grand-total').textContent = currencyDisplay + invoiceData.grandTotal.toFixed(2);
-    document.getElementById('discount').value = invoiceData.discount.toFixed(2);
+    document.getElementById('discount').value = invoiceData.discount; // show raw input value, not converted
 
     saveInvoiceData();
 }

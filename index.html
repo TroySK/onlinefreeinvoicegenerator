@@ -421,7 +421,13 @@
                                 <span id="total-tax">0.00</span>
                             </div>
                             <div class="totals-row">
-                                <span>Discount</span>
+                                <div class="discount-label-row">
+                                    <span>Discount</span>
+                                    <select id="discount-type" class="discount-type-select" aria-label="Discount type">
+                                        <option value="flat">$ Flat</option>
+                                        <option value="percent">% Percent</option>
+                                    </select>
+                                </div>
                                 <input type="number" id="discount" placeholder="0.00" min="0" step="0.01">
                             </div>
                             <div class="totals-row total">

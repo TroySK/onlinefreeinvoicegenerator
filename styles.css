@@ -1303,6 +1303,36 @@ td.tax-cell {
     transition: all 0.15s ease;
 }
 
+.discount-label-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.discount-type-select {
+    padding: 2px 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.discount-type-select:hover {
+    border-color: var(--primary);
+}
+
+.discount-type-select:focus {
+    outline: none;
+    border-color: var(--border-focus);
+}
+
 .totals-row input[type="number"]:focus {
     outline: none;
     border-color: var(--border-focus);
