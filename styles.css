@@ -1767,6 +1767,31 @@ td.tax-cell {
     opacity: 0.6;
     font-size: 1.2rem;
     line-height: 1;
+    font-family: inherit;
+}
+
+.toast-action {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 6px 14px;
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.toast-action:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.toast-has-action .toast-content {
+    flex: 1;
 }
 
 .toast-close:hover {

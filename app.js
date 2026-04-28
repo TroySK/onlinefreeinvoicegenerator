@@ -1001,8 +1001,14 @@ function init() {
     if (clearBtn) clearBtn.addEventListener('click', function() {
         showConfirmDialog('Clear all fields and start over? This cannot be undone.', 'Clear All', 'Cancel').then(function(confirmed) {
             if (confirmed) {
+                // Save backup for undo
+                var backupData = JSON.stringify(invoiceData);
+                var backupKey = STORAGE_KEY;
+
                 localStorage.removeItem(STORAGE_KEY);
                 location.reload();
+
+                // Note: undo on form clear is not feasible after page reload
             }
         });
     });
@@ -1429,6 +1435,10 @@ function deleteFromHistory(invoiceNumber) {
     showConfirmDialog('Delete invoice ' + invoiceNumber + '? This cannot be undone.', 'Delete', 'Cancel').then(function(confirmed) {
         if (!confirmed) return;
 
+        // Save deleted data for potential undo
+        var deletedData = localStorage.getItem(getInvoiceStorageKey(invoiceNumber));
+        var deletedHistory = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]').filter(function(h) { return h.invoiceNumber === invoiceNumber; });
+
         var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
         history = history.filter(function(h) { return h.invoiceNumber !== invoiceNumber; });
         localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
@@ -1446,7 +1456,21 @@ function deleteFromHistory(invoiceNumber) {
         }
 
         updateSidebarList();
-        showToast('Invoice deleted', 'success');
+        showToast('Invoice deleted', 'success', 'Undo', function() {
+            // Restore the deleted invoice
+            if (deletedData) {
+                localStorage.setItem(getInvoiceStorageKey(invoiceNumber), deletedData);
+            }
+            if (deletedHistory.length > 0) {
+                var hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+                hist.push(deletedHistory[0]);
+                // Keep only last 50
+                if (hist.length > 50) hist = hist.slice(-50);
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+            }
+            updateSidebarList();
+            showToast('Invoice restored', 'success');
+        });
     });
 }
 
@@ -2081,7 +2105,7 @@ function showConfirmDialog(message, confirmLabel, cancelLabel) {
         document.addEventListener('keydown', onKeydown);
     });
 }
-function showToast(message, type) {
+function showToast(message, type, actionLabel, actionCallback, duration) {
     var existing = document.getElementById('toast');
     if (existing) existing.remove();
 
@@ -2090,6 +2114,7 @@ function showToast(message, type) {
     toast.setAttribute('role', 'alert');
     toast.setAttribute('aria-live', 'assertive');
     toast.className = 'toast toast-' + type;
+    if (actionLabel) toast.classList.add('toast-has-action');
 
     var icon = type === 'success'
         ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
@@ -2097,7 +2122,8 @@ function showToast(message, type) {
         ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>'
         : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
 
-    toast.innerHTML = '<div class="toast-icon">' + icon + '</div><div class="toast-content">' + message + '</div><button class="toast-close" aria-label="Dismiss notification">\u00d7</button>';
+    var actionHtml = actionLabel ? '<button class="toast-action">' + actionLabel + '</button>' : '';
+    toast.innerHTML = '<div class="toast-icon">' + icon + '</div><div class="toast-content">' + message + '</div>' + actionHtml + '<button class="toast-close" aria-label="Dismiss notification">\u00d7</button>';
     document.body.appendChild(toast);
 
     requestAnimationFrame(function() {
@@ -2109,10 +2135,19 @@ function showToast(message, type) {
         setTimeout(function() { toast.remove(); }, 300);
     });
 
+    if (actionLabel && actionCallback) {
+        toast.querySelector('.toast-action').addEventListener('click', function() {
+            actionCallback();
+            toast.classList.remove('show');
+            setTimeout(function() { toast.remove(); }, 300);
+        });
+    }
+
+    var timeout = duration || 5000;
     setTimeout(function() {
         toast.classList.remove('show');
         setTimeout(function() { toast.remove(); }, 300);
-    }, 5000);
+    }, timeout);
 }
 
 // PDF layout constants
