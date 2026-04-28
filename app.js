@@ -1090,10 +1090,18 @@ function init() {
                 var pdfFile = new File([pdfBlob], 'invoice-' + invoiceData.invoiceNumber + '.pdf', { type: 'application/pdf' });
                 var shareData = { title: subject, text: body, files: [pdfFile] };
                 if (navigator.canShare(shareData)) {
-                    navigator.share(shareData).catch(function() {});
+                    navigator.share(shareData).then(function() {
+                        showToast('Invoice shared!', 'success');
+                    }).catch(function(err) {
+                        if (err.name !== 'AbortError') {
+                            showToast('Sharing was cancelled or failed.', 'error');
+                        }
+                    });
                     return;
                 }
-            } catch (e) {}
+            } catch (e) {
+                showToast('Sharing not supported on this browser.', 'error');
+            }
         }
 
         // Fallback: use regular share or mailto
@@ -1101,12 +1109,23 @@ function init() {
             navigator.share({
                 title: subject,
                 text: body
-            }).catch(function() {});
+            }).then(function() {
+                showToast('Invoice shared!', 'success');
+            }).catch(function(err) {
+                if (err.name !== 'AbortError') {
+                    showToast('Sharing was cancelled or failed.', 'error');
+                }
+            });
         } else {
-            var mailtoLink = 'mailto:' + encodeURIComponent(invoiceData.recipient.email || '') +
-                '?subject=' + encodeURIComponent(subject) +
-                '&body=' + encodeURIComponent(body);
-            window.location.href = mailtoLink;
+            if (invoiceData.recipient.email) {
+                var mailtoLink = 'mailto:' + encodeURIComponent(invoiceData.recipient.email || '') +
+                    '?subject=' + encodeURIComponent(subject) +
+                    '&body=' + encodeURIComponent(body);
+                window.location.href = mailtoLink;
+                showToast('Share dialog opened in your email client.', 'success');
+            } else {
+                showToast('No recipient email set. Please add a client email to share via email.', 'error');
+            }
         }
     });
 
