@@ -508,6 +508,7 @@ const clearBtn = document.getElementById('clear-btn');
 const duplicateBtn = document.getElementById('duplicate-btn');
 const shareBtn = document.getElementById('share-btn');
 const saveBtn = document.getElementById('save-btn');
+const sampleBtn = document.getElementById('sample-btn');
 const previewBtn = document.getElementById('preview-btn');
 const exportBtn = document.getElementById('export-btn');
 const importBtn = document.getElementById('import-btn');
@@ -1060,6 +1061,10 @@ function init() {
         _calculateTotals();
         saveInvoiceData();
         showToast('Invoice saved.', 'success');
+    });
+
+    if (sampleBtn) sampleBtn.addEventListener('click', function() {
+        loadSampleInvoice();
     });
 
     if (shareBtn) shareBtn.addEventListener('click', function() {
@@ -2030,6 +2035,40 @@ function updateLineItemCurrency() {
 // Update currency display (alias for totals — called by calculateTotals)
 function updateCurrencyDisplay() {
     updateTotalsDisplay();
+}
+
+// Load sample invoice data
+function loadSampleInvoice() {
+    invoiceData.sender.name = 'Acme Corporation';
+    invoiceData.sender.address = '123 Business Ave, Suite 100\nSan Francisco, CA 94105';
+    invoiceData.sender.email = 'billing@acmecorp.com';
+    invoiceData.recipient.name = 'TechStart Inc.';
+    invoiceData.recipient.address = '456 Innovation Drive\nNew York, NY 10001';
+    invoiceData.recipient.email = 'accounts@techstart.io';
+    invoiceData.invoiceNumber = getNextInvoiceNumber();
+    invoiceData.date = new Date().toISOString().split('T')[0];
+    var dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30);
+    invoiceData.dueDate = dueDate.toISOString().split('T')[0];
+    invoiceData.poNumber = 'PO-2026-0042';
+    invoiceData.notes = 'Payment is due within 30 days. Thank you for your business!';
+    invoiceData.discount = 0;
+    invoiceData.discountType = 'flat';
+    invoiceData.status = '';
+    invoiceData.taxDetail = 'GST: 27AABCA1234D1ZV';
+
+    invoiceData.lineItems = [
+        { description: 'Web Development - Frontend React Implementation', quantity: 40, rate: 150, tax: 0, amount: 6000, taxAmount: 0 },
+        { description: 'UI/UX Design Consultation', quantity: 10, rate: 200, tax: 0, amount: 2000, taxAmount: 0 },
+        { description: 'Database Migration Services', quantity: 1, rate: 3500, tax: 18, amount: 3500, taxAmount: 630 },
+        { description: 'Monthly Server Hosting (Q2)', quantity: 3, rate: 299, tax: 0, amount: 897, taxAmount: 0 },
+        { description: 'SSL Certificate Renewal (Yearly)', quantity: 2, rate: 199, tax: 10, amount: 398, taxAmount: 39.80 }
+    ];
+
+    syncToDOM();
+    calculateTotals();
+    saveInvoiceData();
+    showToast('Sample invoice loaded', 'success');
 }
 
 // Custom confirm dialog (non-blocking)
