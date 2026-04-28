@@ -185,249 +185,210 @@ function getCurrencyDisplay(currencyCode) {
 }
 
 // LocalStorage persistence
-const STORAGE_KEY = "invoice_data";
-const COUNTER_KEY = "invoice_counter";
-const HISTORY_KEY = "invoice_history";
-
-function getInvoiceStorageKey(invoiceNumber) {
-    return "invoice_" + invoiceNumber;
-}
+// No constants needed — all persistence goes through db.js
 
 function getNextInvoiceNumber() {
-    try {
-        var counter = parseInt(localStorage.getItem(COUNTER_KEY)) || 0;
+    return getMeta('invoice_counter').then(function(val) {
+        var counter = parseInt(val) || 0;
         counter++;
-        localStorage.setItem(COUNTER_KEY, counter.toString());
-        return 'INV-' + counter.toString().padStart(6, '0');
-    } catch (e) {
-        return 'INV-' + Date.now().toString().slice(-6);
-    }
-}
-
-function saveInvoiceData() {
-    try {
-        markClean();
-        const data = {
-            invoiceNumber: invoiceData.invoiceNumber,
-            date: invoiceData.date,
-            dueDate: invoiceData.dueDate,
-            currency: invoiceData.currency,
-            taxDetail: invoiceData.taxDetail,
-            poNumber: invoiceData.poNumber,
-            notes: invoiceData.notes,
-            logo: invoiceData.logo,
-            sender: { ...invoiceData.sender },
-            recipient: { ...invoiceData.recipient },
-            lineItems: invoiceData.lineItems.map(function(item) {
-                return { ...item };
-            }),
-            discount: invoiceData.discount,
-            discountType: invoiceData.discountType,
-            template: invoiceData.template,
-            status: invoiceData.status,
-            paymentDetails: invoiceData.paymentDetails,
-            savedAt: Date.now()
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        localStorage.setItem(getInvoiceStorageKey(data.invoiceNumber), JSON.stringify(data));
-
-        // Update history
-        var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-        var existingIndex = history.findIndex(function(h) { return h.invoiceNumber === data.invoiceNumber; });
-        if (existingIndex >= 0) {
-history[existingIndex] = {
-                invoiceNumber: data.invoiceNumber,
-                date: data.date,
-                savedAt: data.savedAt,
-                grandTotal: invoiceData.grandTotal || 0,
-                currency: data.currency
-            };
-        } else {
-history.push({
-                invoiceNumber: data.invoiceNumber,
-                date: data.date,
-                savedAt: data.savedAt,
-                grandTotal: invoiceData.grandTotal || 0,
-                currency: data.currency
-            });
-        }
-        // Keep only last 50 invoices (most recent)
-        if (history.length > 50) history = history.slice(-50);
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-        updateHistoryDropdown();
-        updateSidebarList();
-
-        showSaveIndicator();
-    } catch (e) {
-        if (e.name === 'QuotaExceededError' || e.code === 22) {
-            showToast('Storage full. Logo may not be saved. Consider using a smaller image.', 'error');
-        }
-    }
-}
-
-function exportBackup() {
-    try {
-        var invoices = [];
-        var counter = localStorage.getItem(COUNTER_KEY) || '0';
-
-        for (var i = 0; i < localStorage.length; i++) {
-            var key = localStorage.key(i);
-            if (key && key.startsWith('invoice_INV-')) {
-                var saved = localStorage.getItem(key);
-                if (saved) {
-                    invoices.push(JSON.parse(saved));
-                }
-            }
-        }
-
-        invoices.sort(function(a, b) {
-            return (a.savedAt || 0) - (b.savedAt || 0);
+        return setMeta('invoice_counter', counter).then(function() {
+            return 'INV-' + counter.toString().padStart(6, '0');
         });
-
-        var backup = {
-            version: '1.0',
-            exportedAt: Date.now(),
-            counter: counter,
-            invoices: invoices
-        };
-
-        var blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'invoice-backup-' + new Date().toISOString().slice(0, 10) + '.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        showToast('Exported ' + invoices.length + ' invoices', 'success');
-    } catch (e) {
-        console.error('Export error:', e);
-        showToast('Export failed', 'error');
-    }
-}
-
-function importBackup(file) {
-    try {
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                var backup = JSON.parse(e.target.result);
-                if (!backup.version || !backup.invoices) {
-                    showToast('Invalid backup file', 'error');
-                    return;
-                }
-
-                var imported = 0;
-                var skipped = 0;
-
-                backup.invoices.forEach(function(invoice) {
-                    if (invoice.invoiceNumber) {
-                        var existing = localStorage.getItem(getInvoiceStorageKey(invoice.invoiceNumber));
-                        if (existing) {
-                            skipped++;
-                        } else {
-                            localStorage.setItem(getInvoiceStorageKey(invoice.invoiceNumber), JSON.stringify(invoice));
-                            imported++;
-                        }
-                    }
-                });
-
-                if (backup.counter) {
-                    var currentCounter = parseInt(localStorage.getItem(COUNTER_KEY) || '0');
-                    var newCounter = parseInt(backup.counter);
-                    if (newCounter > currentCounter) {
-                        localStorage.setItem(COUNTER_KEY, backup.counter.toString());
-                    }
-                }
-
-                var history = [];
-                for (var i = 0; i < localStorage.length; i++) {
-                    var key = localStorage.key(i);
-                    if (key && key.startsWith('invoice_INV-')) {
-                        var saved = localStorage.getItem(key);
-                        if (saved) {
-                            var inv = JSON.parse(saved);
-                            history.push({
-                                invoiceNumber: inv.invoiceNumber,
-                                date: inv.date,
-                                savedAt: inv.savedAt,
-                                grandTotal: (inv.subtotal || 0) + (inv.totalTax || 0) - (inv.discount || 0),
-                                currency: inv.currency
-                            });
-                        }
-                    }
-                }
-                history.sort(function(a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
-                if (history.length > 50) history = history.slice(-50);
-                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-
-                updateHistoryDropdown();
-                updateSidebarList();
-                showToast('Imported ' + imported + ' invoices' + (skipped > 0 ? ', ' + skipped + ' skipped' : ''), 'success');
-            } catch (err) {
-                console.error('Import parse error:', err);
-                showToast('Invalid backup format', 'error');
-            }
-        };
-        reader.readAsText(file);
-    } catch (e) {
-        console.error('Import error:', e);
-        showToast('Import failed', 'error');
-    }
-}
-
-function updateHistoryDropdown() {
-    var history = [];
-    for (var i = 0; i < localStorage.length; i++) {
-        var key = localStorage.key(i);
-        if (key && key.startsWith('invoice_INV-')) {
-            var saved = localStorage.getItem(key);
-            if (saved) {
-                var inv = JSON.parse(saved);
-                history.push({
-                    invoiceNumber: inv.invoiceNumber,
-                    date: inv.date,
-                    savedAt: inv.savedAt,
-                    grandTotal: (inv.subtotal || 0) + (inv.totalTax || 0) - (inv.discount || 0),
-                    currency: inv.currency
-                });
-            }
-        }
-    }
-    history.sort(function(a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
-
-    var select = document.getElementById('invoice-history');
-    select.innerHTML = '<option value="">-- Select saved invoice --</option>';
-    history.forEach(function(item) {
-        var opt = document.createElement('option');
-        opt.value = item.invoiceNumber;
-        opt.textContent = item.invoiceNumber + ' (' + item.date + ')';
-        select.appendChild(opt);
+    }).catch(function() {
+        return 'INV-' + Date.now().toString().slice(-6);
     });
 }
 
+function saveInvoiceData() {
+    markClean();
+    var data = {
+        invoiceNumber: invoiceData.invoiceNumber,
+        date: invoiceData.date,
+        dueDate: invoiceData.dueDate,
+        currency: invoiceData.currency,
+        taxDetail: invoiceData.taxDetail,
+        poNumber: invoiceData.poNumber,
+        notes: invoiceData.notes,
+        logo: invoiceData.logo,
+        sender: { ...invoiceData.sender },
+        recipient: { ...invoiceData.recipient },
+        lineItems: invoiceData.lineItems.map(function(item) {
+            return { ...item };
+        }),
+        discount: invoiceData.discount,
+        discountType: invoiceData.discountType,
+        template: invoiceData.template,
+        status: invoiceData.status,
+        paymentDetails: invoiceData.paymentDetails,
+        subtotal: invoiceData.subtotal,
+        totalTax: invoiceData.totalTax,
+        grandTotal: invoiceData.grandTotal,
+        savedAt: Date.now()
+    };
+    return putInvoice(data).then(function() {
+        // Also save under 'current' key for the "current unsaved" invoice state
+        var currentData = Object.assign({}, data, { invoiceNumber: 'current' });
+        return putInvoice(currentData);
+    }).then(function() {
+        return putMetaHistoryEntry(data);
+    }).then(function() {
+        return updateHistoryDropdownAsync();
+    }).then(function() {
+        return updateSidebarListAsync();
+    }).then(function() {
+        showSaveIndicator();
+    }).catch(function(e) {
+        if (e.name === 'QuotaExceededError' || e.code === 22) {
+            showToast('Storage full. Logo may not be saved. Consider using a smaller image.', 'error');
+        }
+    });
+}
+
+function putMetaHistoryEntry(data) {
+    // History is derived from invoices in IndexedDB, but we keep a separate
+    // meta entry for fast lookup without scanning all invoices.
+    return getMeta('invoice_history').then(function(history) {
+        if (!history) history = [];
+        var existingIndex = history.findIndex(function(h) { return h.invoiceNumber === data.invoiceNumber; });
+        var entry = {
+            invoiceNumber: data.invoiceNumber,
+            date: data.date,
+            savedAt: data.savedAt,
+            grandTotal: data.grandTotal || 0,
+            currency: data.currency
+        };
+        if (existingIndex >= 0) {
+            history[existingIndex] = entry;
+        } else {
+            history.push(entry);
+        }
+        if (history.length > 50) history = history.slice(-50);
+        return setMeta('invoice_history', history);
+    });
+}
+
+function exportBackup() {
+    return getMeta('invoice_counter').then(function(counter) {
+        return getAllInvoices().then(function(invoices) {
+            invoices.sort(function(a, b) {
+                return (a.savedAt || 0) - (b.savedAt || 0);
+            });
+
+            var backup = {
+                version: '1.0',
+                exportedAt: Date.now(),
+                counter: counter || '0',
+                invoices: invoices
+            };
+
+            var blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'invoice-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('Exported ' + invoices.length + ' invoices', 'success');
+        });
+    }).catch(function(e) {
+        console.error('Export error:', e);
+        showToast('Export failed', 'error');
+    });
+}
+
+function importBackup(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            var backup = JSON.parse(e.target.result);
+            if (!backup.version || !backup.invoices) {
+                showToast('Invalid backup file', 'error');
+                return;
+            }
+
+            var imported = 0;
+            var skipped = 0;
+            var promises = [];
+
+            backup.invoices.forEach(function(invoice) {
+                if (invoice.invoiceNumber) {
+                    promises.push(
+                        getInvoice(invoice.invoiceNumber).then(function(existing) {
+                            if (existing) {
+                                skipped++;
+                            } else {
+                                return putInvoice(invoice).then(function() {
+                                    return putMetaHistoryEntry(invoice);
+                                }).then(function() {
+                                    imported++;
+                                });
+                            }
+                        })
+                    );
+                }
+            });
+
+            Promise.all(promises).then(function() {
+                if (backup.counter) {
+                    return getMeta('invoice_counter').then(function(currentCounter) {
+                        var newCounter = parseInt(backup.counter);
+                        if (newCounter > (parseInt(currentCounter) || 0)) {
+                            return setMeta('invoice_counter', backup.counter);
+                        }
+                    });
+                }
+            }).then(function() {
+                return updateHistoryDropdownAsync();
+            }).then(function() {
+                return updateSidebarListAsync();
+            }).then(function() {
+                showToast('Imported ' + imported + ' invoices' + (skipped > 0 ? ', ' + skipped + ' skipped' : ''), 'success');
+            }).catch(function(err) {
+                console.error('Import error:', err);
+                showToast('Import failed', 'error');
+            });
+
+        } catch (err) {
+            console.error('Import parse error:', err);
+            showToast('Invalid backup format', 'error');
+        }
+    };
+    reader.readAsText(file);
+}
+
+function updateHistoryDropdown() {
+    updateHistoryDropdownAsync();
+}
+
+function updateHistoryDropdownAsync() {
+    return getHistory().then(function(history) {
+        var select = document.getElementById('invoice-history');
+        select.innerHTML = '<option value="">-- Select saved invoice --</option>';
+        history.forEach(function(item) {
+            var opt = document.createElement('option');
+            opt.value = item.invoiceNumber;
+            opt.textContent = item.invoiceNumber + ' (' + item.date + ')';
+            select.appendChild(opt);
+        });
+    }).catch(function() {});
+}
+
 function loadFromHistory(invoiceNumber) {
-    var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-    var historyItem = history.find(function(h) { return h.invoiceNumber === invoiceNumber; });
-    if (!historyItem) return;
-
     // Save current invoice to history before switching (if it has data)
-    saveInvoiceData();
-
-    // Load the selected invoice from its individual storage key
-    var storageKey = getInvoiceStorageKey(invoiceNumber);
-    var saved = localStorage.getItem(storageKey);
-    if (saved) {
-        var data = JSON.parse(saved);
-        if (data.invoiceNumber === invoiceNumber) {
-            loadInvoiceData(invoiceNumber);
+    syncFromDOM();
+    saveInvoiceData().then(function() {
+        // Load the selected invoice from IndexedDB
+        return loadInvoiceData(invoiceNumber);
+    }).then(function(loaded) {
+        if (loaded) {
             syncToDOM();
             calculateTotals();
             showToast('Loaded invoice: ' + invoiceNumber, 'success');
         }
-    }
+    });
 }
 
 var saveIndicatorTimeout;
@@ -443,12 +404,9 @@ function showSaveIndicator() {
 }
 
 function loadInvoiceData(invoiceNumber) {
-    try {
-        var storageKey = invoiceNumber ? getInvoiceStorageKey(invoiceNumber) : STORAGE_KEY;
-        var saved = localStorage.getItem(storageKey);
-        if (!saved) return false;
-
-        var data = JSON.parse(saved);
+    var key = invoiceNumber || 'current';
+    return getInvoice(key).then(function(data) {
+        if (!data) return false;
         if (data.invoiceNumber) invoiceData.invoiceNumber = data.invoiceNumber;
         if (data.date) invoiceData.date = data.date;
         if (data.dueDate) invoiceData.dueDate = data.dueDate;
@@ -467,1627 +425,16 @@ function loadInvoiceData(invoiceNumber) {
         if (data.template) invoiceData.template = data.template;
         if (data.status) invoiceData.status = data.status;
         if (data.paymentDetails) invoiceData.paymentDetails = data.paymentDetails;
+
+        // If we loaded from 'current', restore the real invoice number
+        if (key === 'current' && data.invoiceNumber === 'current') {
+            // Try to find a more recent real invoice number
+            invoiceData.invoiceNumber = data.invoiceNumber;
+        }
         return true;
-    } catch (e) {
+    }).catch(function() {
         return false;
-    }
-}
-
-// Template configurations
-const templates = [
-    {
-        templateId: "modern1",
-        name: "Modern Minimal",
-        primaryColor: "#4f46e5",
-        cssOverrides: "",
-        layoutConfig: { showTaxColumn: true, discountPosition: "belowTotal" }
-    },
-    {
-        templateId: "classic",
-        name: "Classic Business",
-        primaryColor: "#1f2937",
-        cssOverrides: "",
-        layoutConfig: { showTaxColumn: true, discountPosition: "belowTotal" }
-    },
-    {
-        templateId: "business",
-        name: "Professional",
-        primaryColor: "#2563eb",
-        cssOverrides: "",
-        layoutConfig: { showTaxColumn: true, discountPosition: "belowTotal" }
-    }
-];
-
-// DOM Elements
-const currencySelect = document.getElementById('currency-select');
-const invoiceContainer = document.getElementById('invoice-container');
-const addItemBtn = document.getElementById('add-item-btn');
-const downloadBtn = document.getElementById('download-btn');
-const deleteEmptyRowsBtn = document.getElementById('delete-empty-rows-btn');
-const clearBtn = document.getElementById('clear-btn');
-const duplicateBtn = document.getElementById('duplicate-btn');
-const shareBtn = document.getElementById('share-btn');
-const saveBtn = document.getElementById('save-btn');
-const sampleBtn = document.getElementById('sample-btn');
-const previewBtn = document.getElementById('preview-btn');
-const exportBtn = document.getElementById('export-btn');
-const importBtn = document.getElementById('import-btn');
-const importFile = document.getElementById('import-file');
-const lineItemsTable = document.getElementById('line-items').getElementsByTagName('tbody')[0];
-
-// Sync data model from DOM (reads all form values into invoiceData)
-function syncFromDOM() {
-    invoiceData.sender.name = document.getElementById('sender-name').value;
-    invoiceData.sender.address = document.getElementById('sender-address').value;
-    invoiceData.sender.email = document.getElementById('sender-email').value;
-    invoiceData.recipient.name = document.getElementById('recipient-name').value;
-    invoiceData.recipient.address = document.getElementById('recipient-address').value;
-    invoiceData.recipient.email = document.getElementById('recipient-email').value;
-    invoiceData.invoiceNumber = document.getElementById('invoice-number').value;
-    invoiceData.date = document.getElementById('invoice-date').value;
-    invoiceData.dueDate = document.getElementById('due-date').value;
-    invoiceData.poNumber = document.getElementById('po-number').value;
-    invoiceData.currency = document.getElementById('currency-select').value;
-    invoiceData.taxDetail = document.getElementById('tax-detail').value;
-    invoiceData.notes = document.getElementById('notes').value;
-    invoiceData.discount = Math.max(0, parseFloat(document.getElementById('discount').value) || 0);
-    invoiceData.discountType = document.getElementById('discount-type').value;
-    invoiceData.status = document.getElementById('invoice-status').value;
-    invoiceData.paymentDetails = {
-        bank: document.getElementById('payment-bank').value,
-        paypal: document.getElementById('payment-paypal').value,
-        link: document.getElementById('payment-link').value
-    };
-
-    // Read line items from DOM
-    var rows = lineItemsTable.rows;
-    invoiceData.lineItems = [];
-    for (var i = 0; i < rows.length; i++) {
-        var row = rows[i];
-        invoiceData.lineItems.push({
-            description: row.querySelector('.item-description').value,
-            quantity: parseFloat(row.querySelector('.item-quantity').value) || 0,
-            rate: parseFloat(row.querySelector('.item-rate').value) || 0,
-            tax: parseFloat(row.querySelector('.item-tax').value) || 0,
-            amount: 0,
-            taxAmount: 0
-        });
-    }
-
-    // Read template selection
-    var checkedRadio = document.querySelector('input[name="template"]:checked');
-    if (checkedRadio) {
-        invoiceData.template = checkedRadio.value;
-    }
-}
-
-// Sync DOM from data model (writes invoiceData to all form values)
-function syncToDOM() {
-    document.getElementById('sender-name').value = invoiceData.sender.name || '';
-    document.getElementById('sender-address').value = invoiceData.sender.address || '';
-    document.getElementById('sender-email').value = invoiceData.sender.email || '';
-    document.getElementById('recipient-name').value = invoiceData.recipient.name || '';
-    document.getElementById('recipient-address').value = invoiceData.recipient.address || '';
-    document.getElementById('recipient-email').value = invoiceData.recipient.email || '';
-    document.getElementById('invoice-number').value = invoiceData.invoiceNumber || '';
-    document.getElementById('invoice-date').value = invoiceData.date || '';
-    document.getElementById('due-date').value = invoiceData.dueDate || '';
-    document.getElementById('po-number').value = invoiceData.poNumber || '';
-    document.getElementById('currency-select').value = invoiceData.currency || 'USD';
-    document.getElementById('tax-detail').value = invoiceData.taxDetail || '';
-    document.getElementById('notes').value = invoiceData.notes || '';
-    document.getElementById('discount').value = invoiceData.discount || '';
-    document.getElementById('discount-type').value = invoiceData.discountType || 'flat';
-    document.getElementById('invoice-status').value = invoiceData.status || '';
-    if (invoiceData.paymentDetails) {
-        document.getElementById('payment-bank').value = invoiceData.paymentDetails.bank || '';
-        document.getElementById('payment-paypal').value = invoiceData.paymentDetails.paypal || '';
-        document.getElementById('payment-link').value = invoiceData.paymentDetails.link || '';
-    }
-
-    // Restore logo
-    if (invoiceData.logo) {
-        document.getElementById('logo-placeholder').style.display = 'none';
-        document.getElementById('logo-preview').style.display = 'flex';
-        document.getElementById('logo-preview-img').src = invoiceData.logo;
-    }
-
-    // Restore line items — diff and update to preserve focus
-    var currentRowCount = lineItemsTable.rows.length;
-    var desiredRowCount = invoiceData.lineItems.length;
-    var activeEl = document.activeElement;
-    var activeRow = -1;
-    var activeField = null;
-
-    // Track which element has focus
-    if (activeEl && activeEl.closest && activeEl.closest('tbody') === lineItemsTable) {
-        var parentRow = activeEl.closest('tr');
-        if (parentRow) {
-            activeRow = Array.prototype.indexOf.call(lineItemsTable.rows, parentRow);
-            if (activeEl.classList.contains('item-description')) activeField = 'description';
-            else if (activeEl.classList.contains('item-quantity')) activeField = 'quantity';
-            else if (activeEl.classList.contains('item-rate')) activeField = 'rate';
-            else if (activeEl.classList.contains('item-tax')) activeField = 'tax';
-        }
-    }
-
-    // Remove extra rows
-    while (lineItemsTable.rows.length > desiredRowCount) {
-        lineItemsTable.deleteRow(lineItemsTable.rows.length - 1);
-    }
-
-    // Update existing rows or add new ones
-    invoiceData.lineItems.forEach(function(item, i) {
-        var row;
-        if (i < lineItemsTable.rows.length) {
-            row = lineItemsTable.rows[i];
-        } else {
-            row = lineItemsTable.insertRow();
-            row.innerHTML =
-                '<td data-label="Description"><textarea class="item-description" placeholder="Item description"></textarea></td>' +
-                '<td data-label="Quantity"><input type="number" class="item-quantity" placeholder="0" min="0" step="1"></td>' +
-                '<td data-label="Rate"><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01"></td>' +
-                '<td data-label="Tax (%)" class="tax-cell">' +
-                    '<input type="number" class="item-tax" placeholder="0" min="0" max="100" step="0.1">' +
-                    '<div class="tax-amount" id="tax-amount-' + i + '"></div>' +
-                '</td>' +
-                '<td data-label="Amount" class="item-amount">' + item.amount.toFixed(2) + '</td>' +
-                '<td data-label="Actions" class="actions-col">' +
-                    '<button type="button" class="delete-row-btn" aria-label="Remove line item">' +
-                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-                            '<polyline points="3 6 5 6 21 6"></polyline>' +
-                            '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>' +
-                        '</svg>' +
-                    '</button>' +
-                '</td>';
-            attachRowListeners(row, i);
-        }
-
-        // Update values only if they differ (avoid disrupting focus)
-        var descEl = row.querySelector('.item-description');
-        var qtyEl = row.querySelector('.item-quantity');
-        var rateEl = row.querySelector('.item-rate');
-        var taxEl = row.querySelector('.item-tax');
-        var amountEl = row.cells[4];
-
-        if (descEl.value !== item.description) descEl.value = item.description;
-        if (qtyEl.value !== String(item.quantity || '')) qtyEl.value = item.quantity || '';
-        if (rateEl.value !== String(item.rate || '')) rateEl.value = item.rate || '';
-        if (taxEl.value !== String(item.tax || '')) taxEl.value = item.tax || '';
-        if (amountEl.textContent !== item.amount.toFixed(2)) amountEl.textContent = item.amount.toFixed(2);
-
-        // Update tax amount display
-        var taxAmountElement = document.getElementById('tax-amount-' + i);
-        if (taxAmountElement) {
-            if (item.taxAmount > 0) {
-                taxAmountElement.textContent = '(' + item.taxAmount.toFixed(2) + ')';
-                taxAmountElement.style.display = '';
-            } else {
-                taxAmountElement.textContent = '';
-                taxAmountElement.style.display = 'none';
-            }
-        }
-
-        updateEmptyRowHint(i);
     });
-
-    // Restore focus
-    if (activeRow >= 0 && activeRow < lineItemsTable.rows.length && activeField) {
-        var restoredRow = lineItemsTable.rows[activeRow];
-        var fieldMap = {
-            description: '.item-description',
-            quantity: '.item-quantity',
-            rate: '.item-rate',
-            tax: '.item-tax'
-        };
-        var el = restoredRow.querySelector(fieldMap[activeField]);
-        if (el) el.focus();
-    }
-
-    updateDeleteButtons();
-
-    // Restore template selection
-    var radios = document.querySelectorAll('input[name="template"]');
-    radios.forEach(function(r) {
-        r.checked = (r.value === invoiceData.template);
-    });
-
-    updateCurrencyDisplay();
-}
-
-// Initialize the app
-function init() {
-    // Try to load saved data first
-    var hasSavedData = loadInvoiceData();
-
-    // Set today's date as default (only if no saved data)
-    if (!hasSavedData) {
-        var today = new Date().toISOString().split('T')[0];
-        invoiceData.date = today;
-        invoiceData.invoiceNumber = getNextInvoiceNumber();
-    }
-
-    // Set default template
-    invoiceData.template = 'modern1';
-
-    // Set default currency based on user's browser language
-    var userLanguage = navigator.language || 'en-US';
-    const languageToCurrencyMap = {
-        'en-US': 'USD',
-        'en-GB': 'GBP',
-        'en-AU': 'AUD',
-        'en-CA': 'CAD',
-        'en-IN': 'INR',
-        'en-SG': 'SGD',
-        'en-NZ': 'NZD',
-        'en-ZA': 'ZAR',
-        'de': 'EUR',
-        'de-DE': 'EUR',
-        'de-CH': 'CHF',
-        'fr': 'EUR',
-        'fr-FR': 'EUR',
-        'fr-CH': 'CHF',
-        'es': 'EUR',
-        'es-ES': 'EUR',
-        'es-MX': 'MXN',
-        'es-AR': 'ARS',
-        'es-CL': 'CLP',
-        'es-CO': 'COP',
-        'es-PE': 'PEN',
-        'es-UY': 'UYU',
-        'it': 'EUR',
-        'it-IT': 'EUR',
-        'it-CH': 'CHF',
-        'pt': 'EUR',
-        'pt-PT': 'EUR',
-        'pt-BR': 'BRL',
-        'nl': 'EUR',
-        'nl-NL': 'EUR',
-        'ja': 'JPY',
-        'ja-JP': 'JPY',
-        'zh': 'CNY',
-        'zh-CN': 'CNY',
-        'zh-HK': 'HKD',
-        'hi': 'INR',
-        'hi-IN': 'INR',
-        'sv': 'SEK',
-        'sv-SE': 'SEK',
-        'no': 'NOK',
-        'nb': 'NOK',
-        'nn': 'NOK',
-        'da': 'DKK',
-        'da-DK': 'DKK',
-        'ru': 'RUB',
-        'ru-RU': 'RUB',
-        'ko': 'KRW',
-        'ko-KR': 'KRW',
-        'tr': 'TRY',
-        'tr-TR': 'TRY',
-        'ar': 'AED',
-        'ar-AE': 'AED',
-        'ar-SA': 'SAR',
-        'he': 'ILS',
-        'he-IL': 'ILS',
-        'ar-EG': 'EGP'
-    };
-    
-    // Try to get currency from language map, fallback to USD
-    const defaultCurrency = languageToCurrencyMap[userLanguage] || languageToCurrencyMap[userLanguage.split('-')[0]] || 'USD';
-    
-    // Populate currency selector with grouped options
-    const currencySelect = document.getElementById('currency-select');
-    const currencyGroups = {
-        'Americas': ['USD', 'CAD', 'MXN', 'BRL', 'ARS', 'CLP', 'COP', 'PEN', 'UYU'],
-        'Europe': ['EUR', 'GBP', 'CHF', 'SEK', 'NOK', 'DKK', 'RUB', 'TRY', 'ILS', 'EGP'],
-        'Asia': ['JPY', 'CNY', 'INR', 'SGD', 'HKD', 'KRW', 'AED', 'SAR'],
-        'Oceania': ['AUD', 'NZD'],
-        'Africa': ['ZAR']
-    };
-    const currencyLabels = {
-        'USD': 'USD - US Dollar', 'EUR': 'EUR - Euro', 'GBP': 'GBP - British Pound', 'CAD': 'CAD - Canadian Dollar',
-        'AUD': 'AUD - Australian Dollar', 'JPY': 'JPY - Japanese Yen', 'CNY': 'CNY - Chinese Yuan', 'INR': 'INR - Indian Rupee',
-        'BRL': 'BRL - Brazilian Real', 'MXN': 'MXN - Mexican Peso', 'SGD': 'SGD - Singapore Dollar', 'NZD': 'NZD - New Zealand Dollar',
-        'CHF': 'CHF - Swiss Franc', 'HKD': 'HKD - Hong Kong Dollar', 'SEK': 'SEK - Swedish Krona', 'NOK': 'NOK - Norwegian Krone',
-        'DKK': 'DKK - Danish Krone', 'ZAR': 'ZAR - South African Rand', 'RUB': 'RUB - Russian Ruble', 'KRW': 'KRW - South Korean Won',
-        'TRY': 'TRY - Turkish Lira', 'AED': 'AED - UAE Dirham', 'SAR': 'SAR - Saudi Riyal', 'ILS': 'ILS - Israeli Shekel',
-        'ARS': 'ARS - Argentine Peso', 'CLP': 'CLP - Chilean Peso', 'COP': 'COP - Colombian Peso', 'PEN': 'PEN - Peruvian Sol',
-        'UYU': 'UYU - Uruguayan Peso', 'EGP': 'EGP - Egyptian Pound'
-    };
-    for (var groupName in currencyGroups) {
-        var optgroup = document.createElement('optgroup');
-        optgroup.label = groupName;
-        currencyGroups[groupName].forEach(function(code) {
-            var option = document.createElement('option');
-            option.value = code;
-            option.textContent = currencyLabels[code] || code;
-            optgroup.appendChild(option);
-        });
-        currencySelect.appendChild(optgroup);
-    }
-    currencySelect.value = defaultCurrency;
-    invoiceData.currency = defaultCurrency;
-
-    // Restore saved data into DOM
-    syncToDOM();
-
-    // Field behavior configuration
-    var fieldConfig = {
-        validationFields: ['sender-name', 'sender-address', 'sender-email', 'recipient-name', 'recipient-address', 'recipient-email'],
-        invoiceMetaFields: ['invoice-number', 'invoice-date'],
-        totalsFields: ['discount'],
-        saveFields: ['po-number', 'tax-detail', 'notes', 'due-date', 'payment-bank', 'payment-paypal', 'payment-link']
-    };
-
-    // Input: sync and validate only (no save)
-    invoiceContainer.addEventListener('input', function(e) {
-        syncFromDOM();
-        markDirty();
-        if (fieldConfig.validationFields.includes(e.target.id)) {
-            validateField(e.target.id.includes('sender') ? 'sender' : 'recipient',
-                e.target.id.includes('name') ? 'name' : e.target.id.includes('email') ? 'email' : 'address',
-                e.target.value);
-        }
-    });
-
-    // Focus out: sync, validate, save based on field type
-    invoiceContainer.addEventListener('focusout', function(e) {
-        syncFromDOM();
-
-        if (fieldConfig.invoiceMetaFields.includes(e.target.id)) {
-            if (e.target.id === 'invoice-number') validateField('invoiceNumber', null, e.target.value);
-            if (e.target.id === 'invoice-date') validateField('date', null, e.target.value);
-            saveInvoiceData();
-        } else if (fieldConfig.totalsFields.includes(e.target.id)) {
-            _calculateTotals();
-        } else if (fieldConfig.validationFields.includes(e.target.id) || fieldConfig.saveFields.includes(e.target.id)) {
-            saveInvoiceData();
-        }
-    });
-
-    // Direct listener for discount field
-    document.getElementById('discount').addEventListener('blur', function() {
-        syncFromDOM();
-        _calculateTotals();
-    });
-
-    // Discount type change
-    document.getElementById('discount-type').addEventListener('change', function() {
-        syncFromDOM();
-        _calculateTotals();
-    });
-
-    // Change events (dropdowns, selects)
-    invoiceContainer.addEventListener('change', function(e) {
-        if (e.target.id === 'currency-select') {
-            syncFromDOM();
-            updateLineItemCurrency();
-            saveInvoiceData();
-        } else if (e.target.id === 'due-date-preset') {
-            var days = parseInt(e.target.value);
-            if (!isNaN(days)) {
-                var invoiceDate = document.getElementById('invoice-date').value;
-                var baseDate = invoiceDate ? new Date(invoiceDate + 'T00:00:00') : new Date();
-                var dueDate = new Date(baseDate.getTime() + days * 86400000);
-                var dueDateStr = dueDate.toISOString().split('T')[0];
-                document.getElementById('due-date').value = dueDateStr;
-                syncFromDOM();
-                saveInvoiceData();
-            }
-        } else if (e.target.id === 'invoice-status') {
-            syncFromDOM();
-            saveInvoiceData();
-        } else if (e.target.id === 'invoice-history') {
-            if (e.target.value) {
-                loadFromHistory(e.target.value);
-                e.target.value = '';
-            }
-        }
-    });
-
-    // Discount auto-format
-    var discountInput = document.getElementById('discount');
-    discountInput.addEventListener('blur', function(e) {
-        var val = parseFloat(e.target.value);
-        if (!isNaN(val) && val > 0) {
-            e.target.value = val.toFixed(2);
-        }
-    });
-    discountInput.addEventListener('focus', function(e) {
-        var val = parseFloat(e.target.value);
-        if (!isNaN(val)) {
-            e.target.value = val;
-        }
-    });
-
-    // Rate auto-format (delegated)
-    invoiceContainer.addEventListener('blur', function(e) {
-        if (e.target.classList.contains('item-rate')) {
-            var val = parseFloat(e.target.value);
-            if (!isNaN(val) && val > 0) {
-                e.target.value = val.toFixed(2);
-            }
-        }
-    }, true);
-    invoiceContainer.addEventListener('focus', function(e) {
-        if (e.target.classList.contains('item-rate')) {
-            var val = parseFloat(e.target.value);
-            if (!isNaN(val)) {
-                e.target.value = val;
-            }
-        }
-    }, true);
-
-    // Logo upload
-    var logoInput = document.getElementById('logo-input');
-    var logoPlaceholder = document.getElementById('logo-placeholder');
-    var logoPreview = document.getElementById('logo-preview');
-    var logoPreviewImg = document.getElementById('logo-preview-img');
-    var logoRemoveBtn = document.getElementById('logo-remove-btn');
-
-    logoInput.addEventListener('change', function(e) {
-        var file = e.target.files[0];
-        if (!file) return;
-        if (file.size > 2 * 1024 * 1024) {
-            showToast('Logo must be under 2MB.', 'error');
-            return;
-        }
-        if (!file.type.match(/^image\/(png|jpeg|gif|webp)$/)) {
-            showToast('Only PNG, JPG, GIF, and WebP images are allowed.', 'error');
-            return;
-        }
-        var reader = new FileReader();
-        reader.onload = function(event) {
-            invoiceData.logo = event.target.result;
-            logoPlaceholder.style.display = 'none';
-            logoPreview.style.display = 'flex';
-            logoPreviewImg.src = event.target.result;
-            saveInvoiceData();
-        };
-        reader.readAsDataURL(file);
-    });
-
-    logoRemoveBtn.addEventListener('click', function() {
-        invoiceData.logo = '';
-        logoInput.value = '';
-        logoPlaceholder.style.display = 'flex';
-        logoPreview.style.display = 'none';
-        logoPreviewImg.src = '';
-        saveInvoiceData();
-    });
-
-    if (addItemBtn) addItemBtn.addEventListener('click', addItem);
-    if (downloadBtn) downloadBtn.addEventListener('click', downloadPDF);
-
-    // Bulk action: delete empty rows
-    if (deleteEmptyRowsBtn) deleteEmptyRowsBtn.addEventListener('click', function() {
-        var emptyIndices = [];
-        invoiceData.lineItems.forEach(function(item, i) {
-            if (!item.description && !item.quantity && !item.rate && !item.tax) {
-                emptyIndices.push(i);
-            }
-        });
-
-        if (emptyIndices.length === 0) {
-            showToast("No empty rows to delete.", "success");
-            return;
-        }
-
-        // Remove empty items from data model (starting from highest index)
-        for (var i = emptyIndices.length - 1; i >= 0; i--) {
-            invoiceData.lineItems.splice(emptyIndices[i], 1);
-        }
-
-        // Re-render table
-        while (lineItemsTable.rows.length > 0) {
-            lineItemsTable.deleteRow(0);
-        }
-
-        invoiceData.lineItems.forEach(function(item, i) {
-            var row = lineItemsTable.insertRow();
-            row.innerHTML = '<td data-label="Description"><textarea class="item-description" placeholder="Item description">' + (item.description || '') + '</textarea></td>' +
-                '<td data-label="Quantity"><input type="number" class="item-quantity" placeholder="0" min="0" step="1" value="' + (item.quantity || '') + '"></td>' +
-                '<td data-label="Rate"><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01" value="' + (item.rate || '') + '"></td>' +
-                '<td data-label="Tax (%)" class="tax-cell"><input type="number" class="item-tax" placeholder="0" min="0" max="100" step="0.1" value="' + (item.tax || '') + '"><div class="tax-amount" id="tax-amount-' + i + '"></div></td>' +
-                '<td data-label="Amount" class="item-amount">' + (item.amount ? item.amount.toFixed(2) : '0.00') + '</td>' +
-                '<td data-label="Actions" class="actions-col"><button type="button" class="delete-row-btn" aria-label="Remove line item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></td>';
-            attachRowListeners(row, i);
-        });
-
-        updateDeleteButtons();
-        calculateTotals();
-        saveInvoiceData();
-        showToast("Empty rows removed.", "success");
-    });
-
-    if (clearBtn) clearBtn.addEventListener('click', function() {
-        showConfirmDialog('Clear all fields and start over? This cannot be undone.', 'Clear All', 'Cancel').then(function(confirmed) {
-            if (confirmed) {
-                // Save backup for undo
-                var backupData = JSON.stringify(invoiceData);
-                var backupKey = STORAGE_KEY;
-
-                localStorage.removeItem(STORAGE_KEY);
-                location.reload();
-
-                // Note: undo on form clear is not feasible after page reload
-            }
-        });
-    });
-
-    if (duplicateBtn) duplicateBtn.addEventListener('click', function() {
-        var today = new Date().toISOString().split('T')[0];
-        invoiceData.invoiceNumber = getNextInvoiceNumber();
-        invoiceData.date = today;
-        invoiceData.dueDate = '';
-        invoiceData.poNumber = '';
-        invoiceData.notes = '';
-        invoiceData.recipient = { name: '', address: '', email: '' };
-        invoiceData.lineItems = [
-            {
-                description: "",
-                quantity: 0,
-                rate: 0.0,
-                tax: 0.0,
-                amount: 0.0,
-                taxAmount: 0.0
-            }
-        ];
-        invoiceData.subtotal = 0;
-        invoiceData.totalTax = 0;
-        invoiceData.discount = 0;
-        invoiceData.grandTotal = 0;
-        invoiceData.status = '';
-
-        syncToDOM();
-        calculateTotals();
-
-        ['recipient-name', 'recipient-email', 'invoice-number'].forEach(function(id) {
-            var el = document.getElementById(id);
-            el.classList.remove('invalid');
-            el.removeAttribute('aria-describedby');
-            el.removeAttribute('aria-invalid');
-        });
-        ['recipient-name-error', 'recipient-email-error', 'invoice-number-error'].forEach(function(id) {
-            var el = document.getElementById(id);
-            if (el) el.textContent = '';
-        });
-
-        saveInvoiceData();
-        showToast('Invoice duplicated. Update recipient and download.', 'success');
-    });
-
-    if (saveBtn) saveBtn.addEventListener('click', function() {
-        syncFromDOM();
-        _calculateTotals();
-        saveInvoiceData();
-        showToast('Invoice saved.', 'success');
-    });
-
-    if (sampleBtn) sampleBtn.addEventListener('click', function() {
-        loadSampleInvoice();
-    });
-
-    if (shareBtn) shareBtn.addEventListener('click', function() {
-        syncFromDOM();
-        _calculateTotals();
-
-        var t = translations[currentLang];
-        var subject = (t.invoice || 'Invoice') + ' ' + invoiceData.invoiceNumber;
-        var body = (t.invoiceNo || 'Invoice Number:') + ' ' + invoiceData.invoiceNumber + '\n';
-        body += (t.dateLabel || 'Date:') + ' ' + invoiceData.date + '\n';
-        body += (t.grandTotalLabel || 'Grand Total:') + ' ' + getCurrencyDisplay(invoiceData.currency) + invoiceData.grandTotal.toFixed(2) + '\n\n';
-        if (invoiceData.sender.name) body += (t.from || 'From:') + ' ' + invoiceData.sender.name + '\n';
-        if (invoiceData.recipient.name) body += (t.to || 'To:') + ' ' + invoiceData.recipient.name + '\n';
-        body += '\n' + window.location.href;
-
-        // Try to share with PDF using Web Share API with file support
-        if (navigator.share && navigator.canShare) {
-            try {
-                var jsPDF = window.jspdf.jsPDF;
-                var doc = new jsPDF();
-                generatePDFContent(doc, t);
-                var pdfBlob = doc.output('blob');
-                var pdfFile = new File([pdfBlob], 'invoice-' + invoiceData.invoiceNumber + '.pdf', { type: 'application/pdf' });
-                var shareData = { title: subject, text: body, files: [pdfFile] };
-                if (navigator.canShare(shareData)) {
-                    navigator.share(shareData).then(function() {
-                        showToast('Invoice shared!', 'success');
-                    }).catch(function(err) {
-                        if (err.name !== 'AbortError') {
-                            showToast('Sharing was cancelled or failed.', 'error');
-                        }
-                    });
-                    return;
-                }
-            } catch (e) {
-                showToast('Sharing not supported on this browser.', 'error');
-            }
-        }
-
-        // Fallback: use regular share or mailto
-        if (navigator.share) {
-            navigator.share({
-                title: subject,
-                text: body
-            }).then(function() {
-                showToast('Invoice shared!', 'success');
-            }).catch(function(err) {
-                if (err.name !== 'AbortError') {
-                    showToast('Sharing was cancelled or failed.', 'error');
-                }
-            });
-        } else {
-            if (invoiceData.recipient.email) {
-                var mailtoLink = 'mailto:' + encodeURIComponent(invoiceData.recipient.email || '') +
-                    '?subject=' + encodeURIComponent(subject) +
-                    '&body=' + encodeURIComponent(body);
-                window.location.href = mailtoLink;
-                showToast('Share dialog opened in your email client.', 'success');
-            } else {
-                showToast('No recipient email set. Please add a client email to share via email.', 'error');
-            }
-        }
-    });
-
-    if (exportBtn) exportBtn.addEventListener('click', function() {
-        syncFromDOM();
-        _calculateTotals();
-        exportBackup();
-    });
-
-    if (importBtn) importBtn.addEventListener('click', function() {
-        importFile.click();
-    });
-
-    if (importFile) importFile.addEventListener('change', function(e) {
-        if (e.target.files && e.target.files[0]) {
-            importBackup(e.target.files[0]);
-            e.target.value = '';
-        }
-    });
-
-    if (previewBtn) previewBtn.addEventListener('click', function() {
-        syncFromDOM();
-        _calculateTotals();
-
-        if (!window.jspdf) {
-            showToast("PDF library not loaded. Please refresh the page.", "error");
-            return;
-        }
-
-        var modal = document.getElementById('preview-modal');
-        var embed = document.getElementById('preview-embed');
-        var t = translations[currentLang] || translations.en;
-
-        try {
-            var jsPDF = window.jspdf.jsPDF;
-            var doc = new jsPDF();
-            generatePDFContent(doc, t);
-            var pdfBlob = doc.output('blob');
-            var pdfBlobUrl = URL.createObjectURL(pdfBlob);
-            embed.src = pdfBlobUrl;
-            modal.classList.add('open');
-        } catch (e) {
-            console.error('Preview error:', e);
-            showToast("Error generating preview: " + e.message, "error");
-        }
-    });
-
-    // Close preview modal
-    document.querySelector('.modal-close').addEventListener('click', function() {
-        document.getElementById('preview-modal').classList.remove('open');
-    });
-
-    document.querySelector('.modal-backdrop').addEventListener('click', function() {
-        document.getElementById('preview-modal').classList.remove('open');
-    });
-
-    // Download from preview modal
-    document.getElementById('preview-download-btn').addEventListener('click', function() {
-        document.getElementById('preview-modal').classList.remove('open');
-        downloadPDF();
-    });
-    
-    // Add template selection event listeners
-    document.querySelectorAll('input[name="template"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                invoiceData.template = e.target.value;
-                updateTemplate();
-                saveInvoiceData();
-            }
-        });
-    });
-
-    // Language selector
-    document.getElementById('language-select').addEventListener('change', function(e) {
-        currentLang = e.target.value;
-        applyTranslations();
-        saveInvoiceData();
-    });
-
-    // Try to set language from localStorage or browser
-    var savedLang = localStorage.getItem('invoice_language');
-    if (savedLang && translations[savedLang]) {
-        currentLang = savedLang;
-        document.getElementById('language-select').value = currentLang;
-    }
-    applyTranslations();
-    
-    // Initialize history dropdown
-    updateHistoryDropdown();
-
-    // Initialize sidebar
-    initSidebar();
-
-    // Add event listeners to the first row
-    attachRowListeners(lineItemsTable.rows[0], 0);
-    
-    // Initialize with one line item
-    calculateLineItemAmount(0);
-    
-    // Apply initial template
-    updateTemplate();
-}
-
-function initSidebar() {
-    var sidebar = document.getElementById('sidebar');
-    var hamburgerToggle = document.getElementById('hamburger-toggle');
-    var mainWrapper = document.querySelector('.main-wrapper');
-    var sidebarSearch = document.getElementById('sidebar-search');
-    var clearHistoryBtn = document.getElementById('clear-history-btn');
-
-
-    // Desktop: sidebar open by default
-    if (window.innerWidth >= 768) {
-        sidebar.classList.add('open');
-    }
-
-    // Hamburger toggle click
-    if (hamburgerToggle) {
-        hamburgerToggle.addEventListener('click', function() {
-            toggleSidebar(sidebar, hamburgerToggle, mainWrapper);
-        });
-    }
-
-    // Sidebar close button click
-    var sidebarCloseBtn = document.getElementById('sidebar-close-btn');
-    if (sidebarCloseBtn) {
-        sidebarCloseBtn.addEventListener('click', function() {
-            toggleSidebar(sidebar, hamburgerToggle, mainWrapper);
-        });
-    }
-
-    // Click on overlay to close sidebar (mobile)
-    var overlay = sidebar.querySelector('::before');
-    sidebar.addEventListener('click', function(e) {
-        if (e.target === sidebar && sidebar.classList.contains('open')) {
-            if (window.innerWidth < 768) {
-                toggleSidebar(sidebar, hamburgerToggle, mainWrapper);
-            }
-        }
-    });
-
-    // Clear history button
-    if (clearHistoryBtn) {
-        clearHistoryBtn.addEventListener('click', function() {
-            showConfirmDialog('Are you sure you want to clear all invoice history? This cannot be undone.', 'Clear All', 'Cancel').then(function(confirmed) {
-                if (confirmed) {
-                    localStorage.removeItem(HISTORY_KEY);
-                    localStorage.removeItem(STORAGE_KEY);
-                    updateSidebarList();
-                    showToast('All history cleared', 'success');
-                }
-            });
-        });
-    }
-
-    // Search functionality
-    if (sidebarSearch) {
-        sidebarSearch.addEventListener('input', function() {
-            filterSidebarList(this.value);
-        });
-    }
-
-}
-
-function toggleSidebar(sidebar, toggleBtn, mainWrapper) {
-    if (sidebar.classList.contains('open')) {
-        sidebar.classList.remove('open');
-        if (mainWrapper) {
-            mainWrapper.classList.add('sidebar-closed');
-        }
-    } else {
-        sidebar.classList.add('open');
-        if (mainWrapper) {
-            mainWrapper.classList.remove('sidebar-closed');
-        }
-    }
-}
-
-function handleResize() {
-    var sidebar = document.getElementById('sidebar');
-    var mainWrapper = document.querySelector('.main-wrapper');
-
-    if (window.innerWidth < 768) {
-        // Mobile - sidebar hidden by default
-        sidebar.classList.remove('open');
-        if (mainWrapper) {
-            mainWrapper.classList.add('sidebar-closed');
-        }
-    } else {
-        // Desktop - sidebar open by default
-        sidebar.classList.add('open');
-        if (mainWrapper) {
-            mainWrapper.classList.remove('sidebar-closed');
-        }
-    }
-}
-
-function toggleMobileSidebar() {
-    var sidebar = document.getElementById('sidebar');
-    var mainWrapper = document.querySelector('.main-wrapper');
-
-    if (sidebar.classList.contains('open')) {
-        sidebar.classList.remove('open');
-        if (mainWrapper) {
-            mainWrapper.classList.add('sidebar-closed');
-        }
-    } else {
-        sidebar.classList.add('open');
-        if (mainWrapper) {
-            mainWrapper.classList.remove('sidebar-closed');
-        }
-    }
-}
-
-function updateSidebarList() {
-    var sidebarList = document.getElementById('sidebar-list');
-    if (!sidebarList) return;
-
-    var history = [];
-    for (var i = 0; i < localStorage.length; i++) {
-        var key = localStorage.key(i);
-        if (key && key.startsWith('invoice_INV-')) {
-            var saved = localStorage.getItem(key);
-            if (saved) {
-                var inv = JSON.parse(saved);
-                history.push({
-                    invoiceNumber: inv.invoiceNumber,
-                    date: inv.date,
-                    savedAt: inv.savedAt,
-                    grandTotal: (inv.subtotal || 0) + (inv.totalTax || 0) - (inv.discount || 0),
-                    currency: inv.currency
-                });
-            }
-        }
-    }
-
-    if (history.length === 0) {
-        sidebarList.innerHTML = '<div class="sidebar-empty">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
-            '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>' +
-            '<polyline points="14 2 14 8 20 8"></polyline>' +
-            '<line x1="12" y1="18" x2="12" y2="12"></line>' +
-            '<line x1="9" y1="15" x2="15" y2="15"></line>' +
-            '</svg>' +
-            '<p>No saved invoices yet.<br>Your invoice history will appear here.</p>' +
-            '</div>';
-        return;
-    }
-
-    // Sort by invoice date, most recent first (descending)
-    history.sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); });
-    history.reverse();
-
-    var html = '';
-    history.forEach(function(item) {
-        var savedDate = item.savedAt ? new Date(item.savedAt) : new Date();
-        var dateStr = savedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        var amount = item.grandTotal ? getCurrencyDisplay(item.currency || 'USD') + item.grandTotal.toFixed(2) : '';
-        
-        html += '<div class="sidebar-item" data-invoice="' + item.invoiceNumber + '" onclick="loadFromHistorySidebar(\'' + item.invoiceNumber + '\')">' +
-            '<div class="sidebar-item-icon">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-            '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>' +
-            '<polyline points="14 2 14 8 20 8"></polyline>' +
-            '</svg>' +
-            '</div>' +
-            '<div class="sidebar-item-content">' +
-            '<div class="sidebar-item-title">' + item.invoiceNumber + '</div>' +
-            '<div class="sidebar-item-meta">' +
-            '<span>' + (item.date || dateStr) + '</span>';
-        
-        if (amount) {
-            html += '<span class="sidebar-item-amount">' + amount + '</span>';
-        }
-        
-        html += '</div>' +
-            '</div>' +
-            '<button class="sidebar-item-delete" onclick="event.stopPropagation(); deleteFromHistory(\'' + item.invoiceNumber + '\')" aria-label="Delete invoice">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">' +
-            '<polyline points="3 6 5 6 21 6"></polyline>' +
-            '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>' +
-            '</svg>' +
-            '</button>' +
-            '</div>';
-    });
-
-    sidebarList.innerHTML = html;
-}
-
-function loadFromHistorySidebar(invoiceNumber) {
-    // Save current invoice first
-    syncFromDOM();
-    saveInvoiceData();
-
-    // Load invoice data from its individual storage key
-    var storageKey = getInvoiceStorageKey(invoiceNumber);
-    var saved = localStorage.getItem(storageKey);
-    if (saved) {
-        var data = JSON.parse(saved);
-        if (data.invoiceNumber === invoiceNumber) {
-            loadInvoiceData(invoiceNumber);
-            syncToDOM();
-            calculateTotals();
-            updateTemplate();
-
-            // Update active state in sidebar
-            document.querySelectorAll('.sidebar-item').forEach(function(item) {
-                item.classList.remove('active');
-            });
-            var activeItem = document.querySelector('.sidebar-item[data-invoice="' + invoiceNumber + '"]');
-            if (activeItem) {
-                activeItem.classList.add('active');
-            }
-
-            showToast('Loaded: ' + invoiceNumber, 'success');
-
-            // Close sidebar on mobile
-            if (window.innerWidth < 768) {
-                toggleMobileSidebar();
-            }
-        } else {
-            showToast('Invoice not found in storage', 'error');
-        }
-    } else {
-        showToast('No invoice data found', 'error');
-    }
-}
-
-function deleteFromHistory(invoiceNumber) {
-    showConfirmDialog('Delete invoice ' + invoiceNumber + '? This cannot be undone.', 'Delete', 'Cancel').then(function(confirmed) {
-        if (!confirmed) return;
-
-        // Save deleted data for potential undo
-        var deletedData = localStorage.getItem(getInvoiceStorageKey(invoiceNumber));
-        var deletedHistory = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]').filter(function(h) { return h.invoiceNumber === invoiceNumber; });
-
-        var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-        history = history.filter(function(h) { return h.invoiceNumber !== invoiceNumber; });
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-
-        // Delete the individual invoice storage
-        localStorage.removeItem(getInvoiceStorageKey(invoiceNumber));
-
-        // If deleting current invoice, clear storage
-        var currentData = localStorage.getItem(STORAGE_KEY);
-        if (currentData) {
-            var data = JSON.parse(currentData);
-            if (data.invoiceNumber === invoiceNumber) {
-                localStorage.removeItem(STORAGE_KEY);
-            }
-        }
-
-        updateSidebarList();
-        showToast('Invoice deleted', 'success', 'Undo', function() {
-            // Restore the deleted invoice
-            if (deletedData) {
-                localStorage.setItem(getInvoiceStorageKey(invoiceNumber), deletedData);
-            }
-            if (deletedHistory.length > 0) {
-                var hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-                hist.push(deletedHistory[0]);
-                // Keep only last 50
-                if (hist.length > 50) hist = hist.slice(-50);
-                localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
-            }
-            updateSidebarList();
-            showToast('Invoice restored', 'success');
-        });
-    });
-}
-
-function filterSidebarList(query) {
-    var items = document.querySelectorAll('.sidebar-item');
-    query = query.toLowerCase();
-
-    items.forEach(function(item) {
-        var title = item.querySelector('.sidebar-item-title').textContent.toLowerCase();
-        var meta = item.querySelector('.sidebar-item-meta').textContent.toLowerCase();
-        
-        if (title.includes(query) || meta.includes(query)) {
-            item.style.display = 'flex';
-        } else {
-            item.style.display = 'none';
-        }
-    });
-}
-
-// Validate a field
-function validateField(section, field, value) {
-    let isValid = true;
-    let errorMessage = "";
-    
-    if (section === 'sender' || section === 'recipient') {
-        if (field === 'name' && !value.trim()) {
-            isValid = false;
-            errorMessage = "Name is required.";
-        } else if (field === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-            isValid = false;
-            errorMessage = "Please enter a valid email address.";
-        }
-        validationErrors[section][field] = errorMessage;
-        updateErrorDisplay(`${section}-${field}-error`, errorMessage, `${section}-${field}`);
-    } else if (section === 'invoiceNumber') {
-        if (!value.trim()) {
-            isValid = false;
-            errorMessage = "Invoice number is required.";
-        }
-        validationErrors.invoiceNumber = errorMessage;
-        updateErrorDisplay('invoice-number-error', errorMessage, 'invoice-number');
-    } else if (section === 'date') {
-        if (!value) {
-            isValid = false;
-            errorMessage = "Date is required.";
-        }
-        validationErrors.date = errorMessage;
-        updateErrorDisplay('invoice-date-error', errorMessage, 'invoice-date');
-    }
-    
-    return isValid;
-}
-
-// Update error display
-function updateErrorDisplay(errorElementId, errorMessage, inputElementId) {
-    var errorElement = document.getElementById(errorElementId);
-    var inputElement = document.getElementById(inputElementId);
-
-    if (errorElement) {
-        errorElement.textContent = errorMessage;
-        errorElement.setAttribute('aria-live', 'polite');
-    }
-
-    if (inputElement) {
-        if (errorMessage) {
-            inputElement.classList.add('invalid');
-            inputElement.setAttribute('aria-describedby', errorElementId);
-            inputElement.setAttribute('aria-invalid', 'true');
-        } else {
-            inputElement.classList.remove('invalid');
-            inputElement.removeAttribute('aria-describedby');
-            inputElement.removeAttribute('aria-invalid');
-        }
-    }
-}
-
-// Update template
-function updateTemplate() {
-    var validTemplates = ['modern1', 'classic', 'business'];
-    if (validTemplates.indexOf(invoiceData.template) === -1) {
-        invoiceData.template = 'modern1';
-    }
-
-    // Remove all template classes
-    invoiceContainer.classList.remove('template-modern1', 'template-classic', 'template-business');
-    
-    // Add the selected template class
-    invoiceContainer.classList.add(`template-${invoiceData.template}`);
-    
-    // Update table header styles
-    const tableHeaders = document.querySelectorAll('.line-items th');
-    tableHeaders.forEach(th => {
-        // Remove all template classes
-        th.classList.remove('template-modern1', 'template-classic', 'template-business');
-        // Add the selected template class
-        th.classList.add(`template-${invoiceData.template}`);
-    });
-    
-    // Update add item button styles
-    const addItemBtn = document.getElementById('add-item-btn');
-    // Remove all template classes
-    addItemBtn.classList.remove('template-modern1', 'template-classic', 'template-business');
-    // Add the selected template class
-    addItemBtn.classList.add(`template-${invoiceData.template}`);
-    
-    // Update line items table styles
-    const lineItemsTable = document.getElementById('line-items');
-    // Remove all template classes
-    lineItemsTable.classList.remove('template-modern1', 'template-classic', 'template-business');
-    // Add the selected template class
-    lineItemsTable.classList.add(`template-${invoiceData.template}`);
-}
-
-// Apply translations to UI
-function applyTranslations() {
-    var t = translations[currentLang];
-    if (!t) return;
-
-    // Store current values before updating labels
-    var paymentBankVal = document.getElementById('payment-bank').value;
-    var paymentPaypalVal = document.getElementById('payment-paypal').value;
-    var paymentLinkVal = document.getElementById('payment-link').value;
-    var notesVal = document.getElementById('notes').value;
-
-    // Update section titles
-    var sections = document.querySelectorAll('.card-section-title');
-    if (sections[0]) sections[0].innerHTML = getIcon('user') + ' ' + t.billingDetails;
-    if (sections[1]) sections[1].innerHTML = getIcon('calendar') + ' ' + t.invoiceDetails;
-    if (sections[2]) sections[2].innerHTML = getIcon('list') + ' ' + t.lineItems;
-    if (sections[3]) sections[3].innerHTML = getIcon('file') + ' ' + t.notesTerms;
-
-    // Update labels - iterate all label elements and match by for attribute
-    var labelMap = {
-        'sender-name': t.senderName, 'sender-address': t.senderAddress, 'sender-email': t.senderEmail,
-        'recipient-name': t.clientName, 'recipient-address': t.clientAddress, 'recipient-email': t.clientEmail,
-        'invoice-number': t.invoiceNumber, 'invoice-date': t.date, 'due-date': t.dueDate,
-        'po-number': t.poNumber, 'currency-select': t.currency, 'invoice-history': t.invoiceHistory || 'Invoice History', 'tax-detail': t.taxDetail,
-        'invoice-status': t.status, 'notes': t.notesTerms,
-        'payment-bank': t.bankName, 'payment-paypal': t.paypalLabel, 'payment-link': t.paymentLink,
-        'payment-details-label': t.paymentDetails, 'logo-upload-label': t.companyLogo
-    };
-
-    for (var id in labelMap) {
-        var label = document.querySelector('label[for="' + id + '"]');
-        if (label) label.textContent = labelMap[id];
-    }
-
-    // Update placeholder text
-    var notesEl = document.getElementById('notes');
-    if (notesEl && !notesEl.value) notesEl.placeholder = t.notesPlaceholder;
-
-    // Update buttons
-    var addItemBtn = document.getElementById('add-item-btn');
-    if (addItemBtn) addItemBtn.innerHTML = getIcon('plus') + ' ' + t.addLineItem;
-
-    var downloadBtn = document.getElementById('download-btn');
-    if (downloadBtn) downloadBtn.innerHTML = getIcon('download') + ' ' + t.downloadPdf;
-
-    var clearBtn = document.getElementById('clear-btn');
-    if (clearBtn) clearBtn.innerHTML = getIcon('trash') + ' ' + t.clear;
-
-    var duplicateBtn = document.getElementById('duplicate-btn');
-    if (duplicateBtn) duplicateBtn.innerHTML = getIcon('copy') + ' ' + t.duplicate;
-
-    var shareBtn = document.getElementById('share-btn');
-    if (shareBtn) shareBtn.innerHTML = getIcon('share') + ' ' + t.share;
-
-    var saveBtn = document.getElementById('save-btn');
-    if (saveBtn) saveBtn.innerHTML = getIcon('save') + ' ' + t.saveInvoice;
-
-    // Update template labels
-    var templateLabels = document.querySelectorAll('.template-option span');
-    if (templateLabels[0]) templateLabels[0].textContent = t.modern;
-    if (templateLabels[1]) templateLabels[1].textContent = t.classic;
-    if (templateLabels[2]) templateLabels[2].textContent = t.professional;
-
-    var templateSelectorLabel = document.querySelector('.template-selector-label');
-    if (templateSelectorLabel) templateSelectorLabel.textContent = t.chooseTemplate;
-
-    // Update status options
-    var statusSel = document.getElementById('invoice-status');
-    if (statusSel) {
-        statusSel.options[0].textContent = t.unpaid;
-        statusSel.options[1].textContent = t.paid;
-        statusSel.options[2].textContent = t.overdue;
-    }
-
-    // Update due date preset
-    var dueDatePreset = document.getElementById('due-date-preset');
-    if (dueDatePreset) {
-        dueDatePreset.options[0].textContent = 'Terms...';
-        dueDatePreset.options[1].textContent = t.termsReceipt;
-        dueDatePreset.options[2].textContent = t.termsNet7;
-        dueDatePreset.options[3].textContent = t.termsNet14;
-        dueDatePreset.options[4].textContent = t.termsNet15;
-        dueDatePreset.options[5].textContent = t.termsNet30;
-        dueDatePreset.options[6].textContent = t.termsNet45;
-        dueDatePreset.options[7].textContent = t.termsNet60;
-        dueDatePreset.options[8].textContent = t.termsNet90;
-    }
-
-    // Update logo upload label
-    var logoUploadLabel = document.getElementById('logo-upload-label');
-    if (logoUploadLabel) logoUploadLabel.textContent = t.companyLogo;
-
-    var logoPlaceholderText = document.querySelector('.logo-upload-placeholder span');
-    if (logoPlaceholderText) logoPlaceholderText.textContent = t.logoUpload;
-
-    // Restore values that might have been cleared
-    document.getElementById('payment-bank').value = paymentBankVal;
-    document.getElementById('payment-paypal').value = paymentPaypalVal;
-    document.getElementById('payment-link').value = paymentLinkVal;
-    document.getElementById('notes').value = notesVal;
-
-    // Save language preference
-    try {
-        localStorage.setItem('invoice_language', currentLang);
-    } catch (e) {}
-}
-
-// Helper function to get SVG icons
-function getIcon(type) {
-    var icons = {
-        'user': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
-        'calendar': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
-        'list': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
-        'file': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>',
-        'plus': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
-        'download': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
-        'trash': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>',
-        'copy': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
-        'share': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>',
-        'save': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>'
-    };
-    return icons[type] || '';
-}
-
-// Add a new line item
-function addItem() {
-    const newRow = lineItemsTable.insertRow();
-    
-    const index = invoiceData.lineItems.length;
-    
-    newRow.innerHTML = `
-        <td data-label="Description"><textarea class="item-description" placeholder="Item description"></textarea></td>
-        <td data-label="Quantity"><input type="number" class="item-quantity" placeholder="0" min="0" step="1"></td>
-        <td data-label="Rate"><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01"></td>
-        <td data-label="Tax (%)" class="tax-cell">
-            <input type="number" class="item-tax" placeholder="0" min="0" max="100" step="0.1">
-            <div class="tax-amount" id="tax-amount-${index}"></div>
-        </td>
-        <td data-label="Amount" class="item-amount">0.00</td>
-        <td data-label="Actions" class="actions-col">
-            <button type="button" class="delete-row-btn" aria-label="Remove line item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-            </button>
-        </td>
-    `;
-    
-    // Add event listeners to the new row
-    const descriptionInput = newRow.querySelector('.item-description');
-    const quantityInput = newRow.querySelector('.item-quantity');
-    const rateInput = newRow.querySelector('.item-rate');
-    const taxInput = newRow.querySelector('.item-tax');
-    const deleteBtn = newRow.querySelector('.delete-row-btn');
-    
-    // Add to invoice data
-    invoiceData.lineItems.push({
-        description: "",
-        quantity: 0,
-        rate: 0.0,
-        tax: 0.0,
-        amount: 0.0,
-        taxAmount: 0.0
-    });
-
-    attachRowListeners(newRow, index);
-    updateDeleteButtons();
-    updateEmptyRowHint(index);
-    saveInvoiceData();
-}
-
-// Delete a line item row
-function deleteRow(index) {
-    if (invoiceData.lineItems.length <= 1) return;
-
-    invoiceData.lineItems.splice(index, 1);
-    lineItemsTable.deleteRow(index);
-
-    // Re-render all rows to fix indices
-    while (lineItemsTable.rows.length > 0) {
-        lineItemsTable.deleteRow(0);
-    }
-
-    invoiceData.lineItems.forEach((item, i) => {
-        const row = lineItemsTable.insertRow();
-        row.innerHTML = `
-            <td data-label="Description"><textarea class="item-description" placeholder="Item description">${item.description}</textarea></td>
-            <td data-label="Quantity"><input type="number" class="item-quantity" placeholder="0" min="0" step="1" value="${item.quantity || ''}"></td>
-            <td data-label="Rate"><input type="number" class="item-rate" placeholder="0.00" min="0" step="0.01" value="${item.rate || ''}"></td>
-            <td data-label="Tax (%)" class="tax-cell">
-                <input type="number" class="item-tax" placeholder="0" min="0" max="100" step="0.1" value="${item.tax || ''}">
-                <div class="tax-amount" id="tax-amount-${i}"></div>
-            </td>
-            <td data-label="Amount" class="item-amount">${item.amount.toFixed(2)}</td>
-            <td data-label="Actions" class="actions-col">
-                <button type="button" class="delete-row-btn" aria-label="Remove line item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                </button>
-            </td>
-        `;
-
-        attachRowListeners(row, i);
-    });
-
-    updateDeleteButtons();
-    calculateTotals();
-}
-
-// Attach event listeners to a row
-function attachRowListeners(row, index) {
-    const descriptionInput = row.querySelector('.item-description');
-    const quantityInput = row.querySelector('.item-quantity');
-    const rateInput = row.querySelector('.item-rate');
-    const taxInput = row.querySelector('.item-tax');
-    const deleteBtn = row.querySelector('.delete-row-btn');
-
-    descriptionInput.addEventListener('input', (e) => {
-        invoiceData.lineItems[index].description = e.target.value;
-        markDirty();
-        saveInvoiceData();
-    });
-
-    quantityInput.addEventListener('input', (e) => {
-        const value = parseFloat(e.target.value) || 0;
-        invoiceData.lineItems[index].quantity = value;
-        if (value < 0) {
-            e.target.classList.add('invalid');
-            e.target.classList.remove('zero-hint');
-        } else if (value === 0) {
-            e.target.classList.remove('invalid');
-            e.target.classList.add('zero-hint');
-        } else {
-            e.target.classList.remove('invalid');
-            e.target.classList.remove('zero-hint');
-        }
-        calculateLineItemAmount(index);
-    });
-
-    quantityInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab' && !e.shiftKey) {
-            e.preventDefault();
-            row.querySelector('.item-rate').focus();
-        }
-    });
-
-    rateInput.addEventListener('input', (e) => {
-        const value = parseFloat(e.target.value) || 0;
-        invoiceData.lineItems[index].rate = value;
-        if (value < 0) {
-            e.target.classList.add('invalid');
-        } else {
-            e.target.classList.remove('invalid');
-        }
-        calculateLineItemAmount(index);
-    });
-
-    rateInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab' && !e.shiftKey) {
-            e.preventDefault();
-            row.querySelector('.item-tax').focus();
-        }
-    });
-
-    rateInput.addEventListener('blur', (e) => {
-        var val = parseFloat(e.target.value);
-        if (!isNaN(val) && val > 0) {
-            e.target.value = val.toFixed(2);
-        }
-    });
-
-    rateInput.addEventListener('focus', (e) => {
-        var val = parseFloat(e.target.value);
-        if (!isNaN(val)) {
-            e.target.value = val;
-        }
-    });
-
-    taxInput.addEventListener('input', (e) => {
-        const value = parseFloat(e.target.value) || 0;
-        invoiceData.lineItems[index].tax = Math.max(0, Math.min(100, value));
-        if (value < 0 || value > 100) {
-            e.target.classList.add('invalid');
-        } else {
-            e.target.classList.remove('invalid');
-        }
-        calculateLineItemAmount(index);
-    });
-
-    // Tab order: from tax input, move to next row or create new row
-    taxInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab' && !e.shiftKey) {
-            e.preventDefault();
-            if (index < lineItemsTable.rows.length - 1) {
-                var nextRow = lineItemsTable.rows[index + 1];
-                nextRow.querySelector('.item-description').focus();
-            } else {
-                addItem();
-                setTimeout(function() {
-                    var newRow = lineItemsTable.rows[lineItemsTable.rows.length - 1];
-                    newRow.querySelector('.item-description').focus();
-                }, 10);
-            }
-        }
-    });
-
-    deleteBtn.addEventListener('click', () => {
-        deleteRow(index);
-        saveInvoiceData();
-    });
-}
-
-// Update delete button disabled states
-function updateDeleteButtons() {
-    const buttons = lineItemsTable.querySelectorAll('.delete-row-btn');
-    buttons.forEach(btn => {
-        btn.disabled = invoiceData.lineItems.length <= 1;
-    });
-}
-
-// Calculate line item amount
-function calculateLineItemAmount(index) {
-    const item = invoiceData.lineItems[index];
-    const amount = item.quantity * item.rate;
-    const taxAmount = item.quantity * item.rate * item.tax / 100;
-
-    item.amount = parseFloat(amount.toFixed(2));
-    item.taxAmount = parseFloat(taxAmount.toFixed(2));
-
-    updateLineItemUI(index);
-    _calculateTotals();
-}
-
-function updateLineItemUI(index) {
-    const item = invoiceData.lineItems[index];
-
-    const amountCell = lineItemsTable.rows[index].cells[4];
-    amountCell.textContent = item.amount.toFixed(2);
-
-    var taxAmountElement = document.getElementById(`tax-amount-${index}`);
-    if (taxAmountElement) {
-        if (item.taxAmount > 0) {
-            taxAmountElement.textContent = `(${item.taxAmount.toFixed(2)})`;
-            taxAmountElement.style.display = '';
-        } else {
-            taxAmountElement.textContent = '';
-            taxAmountElement.style.display = 'none';
-        }
-    }
-
-    updateEmptyRowHint(index);
-}
-
-// Add/remove empty-row class based on whether row has content
-function updateEmptyRowHint(index) {
-    var row = lineItemsTable.rows[index];
-    if (!row) return;
-    var item = invoiceData.lineItems[index];
-    var isEmpty = !item.description && !item.quantity && !item.rate && !item.tax;
-    if (isEmpty) {
-        row.classList.add('empty-row');
-    } else {
-        row.classList.remove('empty-row');
-    }
-}
-
-// Calculate invoice totals (internal, non-debounced)
-function _calculateTotals() {
-    // Calculate subtotal with proper rounding
-    invoiceData.subtotal = parseFloat(
-        invoiceData.lineItems.reduce(function(sum, item) {
-            return sum + parseFloat((item.quantity * item.rate).toFixed(2));
-        }, 0).toFixed(2)
-    );
-
-    // Calculate total tax with proper rounding
-    invoiceData.totalTax = parseFloat(
-        invoiceData.lineItems.reduce(function(sum, item) {
-            return sum + parseFloat((item.quantity * item.rate * item.tax / 100).toFixed(2));
-        }, 0).toFixed(2)
-    );
-
-    // Clamp discount to prevent negative grand total
-    invoiceData.discount = Math.max(0, invoiceData.discount);
-
-    // Convert percentage discount to flat amount for calculation
-    var effectiveDiscount = invoiceData.discount;
-    var baseForDiscount = invoiceData.subtotal + invoiceData.totalTax;
-    if (invoiceData.discountType === 'percent') {
-        effectiveDiscount = baseForDiscount * (invoiceData.discount / 100);
-    }
-
-    var maxDiscount = invoiceData.subtotal + invoiceData.totalTax;
-    if (effectiveDiscount > maxDiscount) {
-        effectiveDiscount = maxDiscount;
-    }
-
-    // Calculate grand total (never negative)
-    invoiceData.grandTotal = parseFloat(
-        Math.max(0, invoiceData.subtotal + invoiceData.totalTax - effectiveDiscount).toFixed(2)
-    );
-
-    // Update UI directly
-    var currencyDisplay = getCurrencyDisplay(invoiceData.currency);
-    document.getElementById('subtotal').textContent = currencyDisplay + invoiceData.subtotal.toFixed(2);
-    document.getElementById('total-tax').textContent = currencyDisplay + invoiceData.totalTax.toFixed(2);
-    document.getElementById('grand-total').textContent = currencyDisplay + invoiceData.grandTotal.toFixed(2);
-    document.getElementById('discount').value = invoiceData.discount; // show raw input value, not converted
-
-    saveInvoiceData();
-}
-
-// Debounced calculateTotals
-var calcTimeout;
-function calculateTotals() {
-    clearTimeout(calcTimeout);
-    calcTimeout = setTimeout(_calculateTotals, 100);
-}
-
-// Update totals display (called on every calculation)
-function updateTotalsDisplay() {
-    var currencyDisplay = getCurrencyDisplay(invoiceData.currency);
-    document.getElementById('subtotal').textContent = currencyDisplay + invoiceData.subtotal.toFixed(2);
-    document.getElementById('total-tax').textContent = currencyDisplay + invoiceData.totalTax.toFixed(2);
-    document.getElementById('grand-total').textContent = currencyDisplay + invoiceData.grandTotal.toFixed(2);
-    document.getElementById('discount').value = invoiceData.discount.toFixed(2);
-}
-
-// Update line item currency display (only called when currency changes)
-function updateLineItemCurrency() {
-    var currencyDisplay = getCurrencyDisplay(invoiceData.currency);
-    for (var i = 0; i < invoiceData.lineItems.length; i++) {
-        var amountCell = lineItemsTable.rows[i].cells[4];
-        if (amountCell) {
-            amountCell.textContent = currencyDisplay + invoiceData.lineItems[i].amount.toFixed(2);
-        }
-    }
-    updateTotalsDisplay();
-}
-
-// Update currency display (alias for totals — called by calculateTotals)
-function updateCurrencyDisplay() {
-    updateTotalsDisplay();
-}
-
-// Load sample invoice data
-function loadSampleInvoice() {
-    invoiceData.sender.name = 'Acme Corporation';
-    invoiceData.sender.address = '123 Business Ave, Suite 100\nSan Francisco, CA 94105';
-    invoiceData.sender.email = 'billing@acmecorp.com';
-    invoiceData.recipient.name = 'TechStart Inc.';
-    invoiceData.recipient.address = '456 Innovation Drive\nNew York, NY 10001';
-    invoiceData.recipient.email = 'accounts@techstart.io';
-    invoiceData.invoiceNumber = getNextInvoiceNumber();
-    invoiceData.date = new Date().toISOString().split('T')[0];
-    var dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 30);
-    invoiceData.dueDate = dueDate.toISOString().split('T')[0];
-    invoiceData.poNumber = 'PO-2026-0042';
-    invoiceData.notes = 'Payment is due within 30 days. Thank you for your business!';
-    invoiceData.discount = 0;
-    invoiceData.discountType = 'flat';
-    invoiceData.status = '';
-    invoiceData.taxDetail = 'GST: 27AABCA1234D1ZV';
-
-    invoiceData.lineItems = [
-        { description: 'Web Development - Frontend React Implementation', quantity: 40, rate: 150, tax: 0, amount: 6000, taxAmount: 0 },
-        { description: 'UI/UX Design Consultation', quantity: 10, rate: 200, tax: 0, amount: 2000, taxAmount: 0 },
-        { description: 'Database Migration Services', quantity: 1, rate: 3500, tax: 18, amount: 3500, taxAmount: 630 },
-        { description: 'Monthly Server Hosting (Q2)', quantity: 3, rate: 299, tax: 0, amount: 897, taxAmount: 0 },
-        { description: 'SSL Certificate Renewal (Yearly)', quantity: 2, rate: 199, tax: 10, amount: 398, taxAmount: 39.80 }
-    ];
-
-    syncToDOM();
-    calculateTotals();
-    saveInvoiceData();
-    showToast('Sample invoice loaded', 'success');
 }
 
 // Custom confirm dialog (non-blocking)
@@ -2472,14 +819,17 @@ function downloadPDF() {
 // Initialize the app when the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     openDB().then(function() {
-        var savedTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
+        // Try IndexedDB first, fallback to localStorage for migration
+        getMeta('theme').then(function(dbTheme) {
+            var savedTheme = dbTheme || localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        });
 
         document.getElementById('theme-toggle').addEventListener('click', function() {
             var current = document.documentElement.getAttribute('data-theme');
             var next = current === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
+            setMeta('theme', next).catch(function() {});
         });
 
         init();
