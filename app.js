@@ -999,10 +999,12 @@ function init() {
     });
 
     if (clearBtn) clearBtn.addEventListener('click', function() {
-        if (confirm('Clear all fields and start over? This cannot be undone.')) {
-            localStorage.removeItem(STORAGE_KEY);
-            location.reload();
-        }
+        showConfirmDialog('Clear all fields and start over? This cannot be undone.', 'Clear All', 'Cancel').then(function(confirmed) {
+            if (confirmed) {
+                localStorage.removeItem(STORAGE_KEY);
+                location.reload();
+            }
+        });
     });
 
     if (duplicateBtn) duplicateBtn.addEventListener('click', function() {
@@ -1239,12 +1241,14 @@ function initSidebar() {
     // Clear history button
     if (clearHistoryBtn) {
         clearHistoryBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to clear all invoice history? This cannot be undone.')) {
-                localStorage.removeItem(HISTORY_KEY);
-                localStorage.removeItem(STORAGE_KEY);
-                updateSidebarList();
-                showToast('All history cleared', 'success');
-            }
+            showConfirmDialog('Are you sure you want to clear all invoice history? This cannot be undone.', 'Clear All', 'Cancel').then(function(confirmed) {
+                if (confirmed) {
+                    localStorage.removeItem(HISTORY_KEY);
+                    localStorage.removeItem(STORAGE_KEY);
+                    updateSidebarList();
+                    showToast('All history cleared', 'success');
+                }
+            });
         });
     }
 
@@ -1422,28 +1426,28 @@ function loadFromHistorySidebar(invoiceNumber) {
 }
 
 function deleteFromHistory(invoiceNumber) {
-    if (!confirm('Delete invoice ' + invoiceNumber + '? This cannot be undone.')) {
-        return;
-    }
+    showConfirmDialog('Delete invoice ' + invoiceNumber + '? This cannot be undone.', 'Delete', 'Cancel').then(function(confirmed) {
+        if (!confirmed) return;
 
-    var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-    history = history.filter(function(h) { return h.invoiceNumber !== invoiceNumber; });
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+        history = history.filter(function(h) { return h.invoiceNumber !== invoiceNumber; });
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 
-    // Delete the individual invoice storage
-    localStorage.removeItem(getInvoiceStorageKey(invoiceNumber));
+        // Delete the individual invoice storage
+        localStorage.removeItem(getInvoiceStorageKey(invoiceNumber));
 
-    // If deleting current invoice, clear storage
-    var currentData = localStorage.getItem(STORAGE_KEY);
-    if (currentData) {
-        var data = JSON.parse(currentData);
-        if (data.invoiceNumber === invoiceNumber) {
-            localStorage.removeItem(STORAGE_KEY);
+        // If deleting current invoice, clear storage
+        var currentData = localStorage.getItem(STORAGE_KEY);
+        if (currentData) {
+            var data = JSON.parse(currentData);
+            if (data.invoiceNumber === invoiceNumber) {
+                localStorage.removeItem(STORAGE_KEY);
+            }
         }
-    }
 
-    updateSidebarList();
-    showToast('Invoice deleted', 'success');
+        updateSidebarList();
+        showToast('Invoice deleted', 'success');
+    });
 }
 
 function filterSidebarList(query) {
@@ -2004,7 +2008,79 @@ function updateCurrencyDisplay() {
     updateTotalsDisplay();
 }
 
-// Toast notification
+// Custom confirm dialog (non-blocking)
+function showConfirmDialog(message, confirmLabel, cancelLabel) {
+    return new Promise(function(resolve) {
+        var existing = document.getElementById('confirm-dialog');
+        if (existing) existing.remove();
+
+        var backdrop = document.createElement('div');
+        backdrop.className = 'confirm-backdrop';
+
+        var dialog = document.createElement('div');
+        dialog.className = 'confirm-dialog';
+        dialog.setAttribute('role', 'alertdialog');
+        dialog.setAttribute('aria-modal', 'true');
+        dialog.innerHTML =
+            '<div class="confirm-dialog-content">' +
+                '<div class="confirm-dialog-icon">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">' +
+                        '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>' +
+                        '<line x1="12" y1="9" x2="12" y2="13"></line>' +
+                        '<line x1="12" y1="17" x2="12.01" y2="17"></line>' +
+                    '</svg>' +
+                '</div>' +
+                '<p class="confirm-dialog-message">' + message + '</p>' +
+                '<div class="confirm-dialog-actions">' +
+                    '<button class="confirm-dialog-cancel btn">' + (cancelLabel || 'Cancel') + '</button>' +
+                    '<button class="confirm-dialog-confirm btn btn-danger">' + (confirmLabel || 'Confirm') + '</button>' +
+                '</div>' +
+            '</div>';
+
+        document.body.appendChild(backdrop);
+        document.body.appendChild(dialog);
+
+        requestAnimationFrame(function() {
+            backdrop.classList.add('show');
+            dialog.classList.add('show');
+            dialog.querySelector('.confirm-dialog-cancel').focus();
+        });
+
+        function close() {
+            backdrop.classList.remove('show');
+            dialog.classList.remove('show');
+            setTimeout(function() {
+                backdrop.remove();
+                dialog.remove();
+            }, 200);
+        }
+
+        dialog.querySelector('.confirm-dialog-cancel').addEventListener('click', function() {
+            close();
+            resolve(false);
+        });
+
+        dialog.querySelector('.confirm-dialog-confirm').addEventListener('click', function() {
+            close();
+            resolve(true);
+        });
+
+        backdrop.addEventListener('click', function() {
+            close();
+            resolve(false);
+        });
+
+        // Keyboard: Escape to cancel
+        function onKeydown(e) {
+            if (e.key === 'Escape') {
+                close();
+                resolve(false);
+                document.removeEventListener('keydown', onKeydown);
+            }
+        }
+        document.addEventListener('keydown', onKeydown);
+    });
+}
 function showToast(message, type) {
     var existing = document.getElementById('toast');
     if (existing) existing.remove();

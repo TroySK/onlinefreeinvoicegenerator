@@ -1625,6 +1625,88 @@ td.tax-cell {
     justify-content: flex-end;
 }
 
+/* Confirm Dialog */
+.confirm-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
+}
+
+.confirm-backdrop.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.confirm-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    background: var(--bg-surface);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border);
+    z-index: 2001;
+    opacity: 0;
+    transition: all var(--transition-normal);
+    pointer-events: none;
+    min-width: 320px;
+    max-width: 90%;
+}
+
+.confirm-dialog.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+}
+
+.confirm-dialog-content {
+    padding: 24px;
+}
+
+.confirm-dialog-icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+    color: var(--warning);
+}
+
+.confirm-dialog-message {
+    text-align: center;
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.confirm-dialog-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.confirm-dialog-actions .btn {
+    min-width: 100px;
+    justify-content: center;
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+    border: none;
+}
+
+.btn-danger:hover {
+    background: var(--danger-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
 /* Toast Notification */
 .toast {
     position: fixed;
