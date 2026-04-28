@@ -816,9 +816,90 @@ function downloadPDF() {
     }
 }
 
+// Migrate data from localStorage to IndexedDB on first run
+function migrateFromLocalStorage() {
+    try {
+        var hasOldData = localStorage.getItem('invoice_data');
+        if (!hasOldData) return;
+
+        // Migrate counter
+        var counter = localStorage.getItem('invoice_counter');
+        if (counter) {
+            setMeta('invoice_counter', parseInt(counter));
+        }
+
+        // Migrate theme
+        var theme = localStorage.getItem('theme');
+        if (theme) {
+            setMeta('theme', theme);
+        }
+
+        // Migrate language
+        var lang = localStorage.getItem('invoice_language');
+        if (lang) {
+            setMeta('language', lang);
+        }
+
+        // Migrate all invoices
+        var migratedCount = 0;
+        var historyEntries = [];
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key && key.startsWith('invoice_INV-')) {
+                try {
+                    var saved = JSON.parse(localStorage.getItem(key));
+                    if (saved && saved.invoiceNumber) {
+                        putInvoice(saved);
+                        historyEntries.push({
+                            invoiceNumber: saved.invoiceNumber,
+                            date: saved.date,
+                            savedAt: saved.savedAt || Date.now(),
+                            grandTotal: saved.grandTotal || (saved.subtotal || 0) + (saved.totalTax || 0) - (saved.discount || 0),
+                            currency: saved.currency
+                        });
+                        migratedCount++;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        if (historyEntries.length > 0) {
+            setMeta('invoice_history', historyEntries);
+        }
+
+        // Also migrate the current invoice
+        try {
+            var current = JSON.parse(hasOldData);
+            if (current && current.invoiceNumber) {
+                putInvoice(current);
+                putInvoice(Object.assign({}, current, { invoiceNumber: 'current' }));
+            }
+        } catch (e) {}
+
+        showToast('Migrated ' + migratedCount + ' invoices from local storage', 'success');
+
+        // Clean up localStorage after migration
+        ['invoice_data', 'invoice_counter', 'invoice_history', 'theme', 'invoice_language'].forEach(function(k) {
+            localStorage.removeItem(k);
+        });
+        // Remove individual invoice keys
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key && key.startsWith('invoice_INV-')) {
+                localStorage.removeItem(key);
+            }
+        }
+    } catch (e) {
+        console.warn('Migration from localStorage failed (non-fatal):', e);
+    }
+}
+
 // Initialize the app when the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     openDB().then(function() {
+        // Migrate data from localStorage to IndexedDB if present
+        migrateFromLocalStorage();
+
         // Try IndexedDB first, fallback to localStorage for migration
         getMeta('theme').then(function(dbTheme) {
             var savedTheme = dbTheme || localStorage.getItem('theme') || 'dark';
