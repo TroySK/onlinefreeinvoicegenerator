@@ -131,6 +131,24 @@ const translations = {
 let currentLang = 'en';
 
 // Validation errors
+let isDirty = false;
+
+// Track unsaved changes for beforeunload warning
+function markDirty() {
+    isDirty = true;
+}
+
+function markClean() {
+    isDirty = false;
+}
+
+window.addEventListener('beforeunload', function(e) {
+    if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
 const validationErrors = {
     sender: {
         name: "",
@@ -187,6 +205,7 @@ function getNextInvoiceNumber() {
 
 function saveInvoiceData() {
     try {
+        markClean();
         const data = {
             invoiceNumber: invoiceData.invoiceNumber,
             date: invoiceData.date,
@@ -796,6 +815,7 @@ function init() {
     // Input: sync and validate only (no save)
     invoiceContainer.addEventListener('input', function(e) {
         syncFromDOM();
+        markDirty();
         if (fieldConfig.validationFields.includes(e.target.id)) {
             validateField(e.target.id.includes('sender') ? 'sender' : 'recipient',
                 e.target.id.includes('name') ? 'name' : e.target.id.includes('email') ? 'email' : 'address',
@@ -1747,6 +1767,7 @@ function attachRowListeners(row, index) {
 
     descriptionInput.addEventListener('input', (e) => {
         invoiceData.lineItems[index].description = e.target.value;
+        markDirty();
         saveInvoiceData();
     });
 
