@@ -2470,18 +2470,24 @@ function downloadPDF() {
 }
 
 // Initialize the app when the DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
+document.addEventListener('DOMContentLoaded', function() {
+    openDB().then(function() {
+        var savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
 
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme');
-        const next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            var current = document.documentElement.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        });
+
+        init();
+    }).catch(function(err) {
+        console.error('Failed to open database:', err);
+        showToast('Database failed to initialize. Some features may not work.', 'error');
+        init();
     });
-
-    init();
 
     // Keyboard shortcut: Ctrl+S / Cmd+S to download
     document.addEventListener('keydown', function(e) {
