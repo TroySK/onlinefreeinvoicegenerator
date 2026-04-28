@@ -80,22 +80,22 @@
 
 ### Phase 1: Database layer
 
-- [ ] **Create `db.js` service module** — Raw IndexedDB wrapper with Promise API. DB `InvoiceDB` with object stores: `invoices` (keyed by `invoiceNumber`) and `meta` (key-value). Exports: `openDB()`, `getInvoice()`, `putInvoice()`, `deleteInvoice()`, `getAllInvoices()`, `getMeta()`, `setMeta()`, `getHistory()`, `putHistory()`, `clearInvoices()`.
-- [ ] **Add `db.js` to index.html** — Script tag before `app.js`.
-- [ ] **Bootstrap DB on app init** — Call `openDB()` in `DOMContentLoaded` before `init()`. Store db reference globally.
+- [x] **Create `db.js` service module** — Raw IndexedDB wrapper with Promise API. DB `InvoiceDB` with object stores: `invoices` (keyed by `invoiceNumber`) and `meta` (key-value). Exports: `openDB()`, `getInvoice()`, `putInvoice()`, `deleteInvoice()`, `getAllInvoices()`, `getMeta()`, `setMeta()`, `getHistory()`, `putHistory()`, `clearInvoices()`.
+- [x] **Add `db.js` to index.html** — Script tag before `app.js`.
+- [x] **Bootstrap DB on app init** — Call `openDB()` in `DOMContentLoaded` before `init()`. Store db reference globally.
 
 ### Phase 2: Replace all localStorage calls
 
-- [ ] **`getNextInvoiceNumber()`** — Make async, replace `localStorage.getItem/setItem(COUNTER_KEY)` with `getMeta/setMeta('invoice_counter')`.
-- [ ] **`saveInvoiceData()`** — Make async, replace `localStorage.setItem(STORAGE_KEY)`, `setItem(getInvoiceStorageKey(...))`, `setItem(HISTORY_KEY)` with `putInvoice()` + `putHistory()`.
-- [ ] **`loadInvoiceData()`** — Make async, replace `localStorage.getItem(STORAGE_KEY)`/`getItem(getInvoiceStorageKey(...))` with `getInvoice()`.
-- [ ] **`deleteFromHistory()`** — Make async, replace with `deleteInvoice()` + `putHistory()`. Keep undo restore logic.
-- [ ] **`exportBackup()`** — Make async, replace localStorage loop with `getAllInvoices()`.
-- [ ] **`importBackup()`** — Make async, replace localStorage writes with `putInvoice()`.
-- [ ] **`updateHistoryDropdown()` & `updateSidebarList()`** — Make async, replace localStorage loops with `getAllInvoices()`.
-- [ ] **`loadFromHistory()` & `loadFromHistorySidebar()`** — Make async, replace with `getInvoice()`.
-- [ ] **Theme & language persistence** — Replace localStorage with `getMeta/setMeta()`.
-- [ ] **Clear form / Clear history** — Replace `localStorage.removeItem()` with `clearInvoices()`.
-- [ ] **Refactor event handlers** — Update `init()` event listeners to `await` async DB calls. Update `attachRowListeners()` callbacks.
-- [ ] **Remove all localStorage references** — Delete `STORAGE_KEY`, `COUNTER_KEY`, `HISTORY_KEY`, `getInvoiceStorageKey()`. Strip all `localStorage.X` calls.
-- [ ] **Add error handling & migrate existing data** — On first load, try to read data from old localStorage keys and write to IndexedDB. Show migration toast if data was moved.
+- [x] **`getNextInvoiceNumber()`** — Make async, replace `localStorage.getItem/setItem(COUNTER_KEY)` with `getMeta/setMeta('invoice_counter')`.
+- [x] **`saveInvoiceData()`** — Make async, replace `localStorage.setItem(STORAGE_KEY)`, `setItem(getInvoiceStorageKey(...))`, `setItem(HISTORY_KEY)` with `putInvoice()` + `putHistory()`.
+- [x] **`loadInvoiceData()`** — Make async, replace `localStorage.getItem(STORAGE_KEY)`/`getItem(getInvoiceStorageKey(...))` with `getInvoice()`.
+- [x] **`deleteFromHistory()`** — Make async, replace with `deleteInvoice()` + `putHistory()`. Keep undo restore logic.
+- [x] **`exportBackup()`** — Make async, replace localStorage loop with `getAllInvoices()`.
+- [x] **`importBackup()`** — Make async, replace localStorage writes with `putInvoice()`.
+- [x] **`updateHistoryDropdown()` & `updateSidebarList()`** — Make async, replace localStorage loops with `getAllInvoices()`.
+- [x] **`loadFromHistory()` & `loadFromHistorySidebar()`** — Make async, replace with `getInvoice()`.
+- [x] **Theme & language persistence** — Replace localStorage with `getMeta/setMeta()`.
+- [x] **Clear form / Clear history** — Replace `localStorage.removeItem()` with `clearInvoices()`.
+- [x] **Refactor event handlers** — Update `init()` event listeners to `await` async DB calls. Update `attachRowListeners()` callbacks.
+- [x] **Remove all localStorage references** — Delete `STORAGE_KEY`, `COUNTER_KEY`, `HISTORY_KEY`, `getInvoiceStorageKey()`. Strip all `localStorage.X` calls.
+- [x] **Add error handling & migrate existing data** — On first load, try to read data from old localStorage keys and write to IndexedDB. Show migration toast if data was moved.
