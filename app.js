@@ -235,19 +235,19 @@ function saveInvoiceData() {
         var history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
         var existingIndex = history.findIndex(function(h) { return h.invoiceNumber === data.invoiceNumber; });
         if (existingIndex >= 0) {
-            history[existingIndex] = { 
-                invoiceNumber: data.invoiceNumber, 
-                date: data.date, 
+history[existingIndex] = {
+                invoiceNumber: data.invoiceNumber,
+                date: data.date,
                 savedAt: data.savedAt,
-                grandTotal: data.subtotal + data.totalTax - data.discount,
+                grandTotal: invoiceData.grandTotal || 0,
                 currency: data.currency
             };
         } else {
-            history.push({ 
-                invoiceNumber: data.invoiceNumber, 
-                date: data.date, 
+history.push({
+                invoiceNumber: data.invoiceNumber,
+                date: data.date,
                 savedAt: data.savedAt,
-                grandTotal: data.subtotal + data.totalTax - data.discount,
+                grandTotal: invoiceData.grandTotal || 0,
                 currency: data.currency
             });
         }
