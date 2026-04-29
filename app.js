@@ -201,8 +201,9 @@ function getNextInvoiceNumber() {
 
 function saveInvoiceData() {
     markClean();
+    var invoiceNumber = invoiceData.invoiceNumber || 'current';
     var data = {
-        invoiceNumber: invoiceData.invoiceNumber,
+        invoiceNumber: invoiceNumber,
         date: invoiceData.date,
         dueDate: invoiceData.dueDate,
         currency: invoiceData.currency,
@@ -225,9 +226,8 @@ function saveInvoiceData() {
         grandTotal: invoiceData.grandTotal,
         savedAt: Date.now()
     };
-    return putInvoice(data).then(function() {
-        var currentData = Object.assign({}, data, { invoiceNumber: 'current' });
-        return putInvoice(currentData);
+return putInvoice(data).then(function() {
+        return setMeta('last_edited_invoice', invoiceNumber);
     }).then(function() {
         return putMetaHistoryEntry(data);
     }).then(function() {
@@ -399,31 +399,52 @@ function showSaveIndicator() {
 }
 
 function loadInvoiceData(invoiceNumber) {
-    var key = invoiceNumber || 'current';
-    return getInvoice(key).then(function(data) {
-        if (!data) return false;
-        if (data.invoiceNumber) invoiceData.invoiceNumber = data.invoiceNumber;
-        if (data.date) invoiceData.date = data.date;
-        if (data.dueDate) invoiceData.dueDate = data.dueDate;
-        if (data.currency) invoiceData.currency = data.currency;
-        if (data.taxDetail) invoiceData.taxDetail = data.taxDetail;
-        if (data.poNumber) invoiceData.poNumber = data.poNumber;
-        if (data.notes) invoiceData.notes = data.notes;
-        if (data.logo) invoiceData.logo = data.logo;
-        if (data.sender) Object.assign(invoiceData.sender, data.sender);
-        if (data.recipient) Object.assign(invoiceData.recipient, data.recipient);
-        if (data.lineItems && data.lineItems.length > 0) {
-            invoiceData.lineItems = data.lineItems;
+    if (invoiceNumber) {
+        return getInvoice(invoiceNumber).then(function(data) {
+            if (!data) return false;
+            return applyLoadedData(data);
+        }).catch(function() {
+            return false;
+        });
+    }
+
+    // No invoice number: try to load the most recently edited invoice
+    return getMeta('last_edited_invoice').then(function(lastEdited) {
+        if (lastEdited) {
+            return getInvoice(lastEdited).then(function(data) {
+                if (data) return applyLoadedData(data);
+            });
         }
-        if (typeof data.discount === "number") invoiceData.discount = data.discount;
-        if (data.discountType) invoiceData.discountType = data.discountType;
-        if (data.template) invoiceData.template = data.template;
-        if (data.status) invoiceData.status = data.status;
-        if (data.paymentDetails) invoiceData.paymentDetails = data.paymentDetails;
-        return true;
+    }).then(function(loaded) {
+        if (loaded) return true;
+        // Nothing saved yet
+        return false;
     }).catch(function() {
         return false;
     });
+}
+
+function applyLoadedData(data) {
+    if (!data) return false;
+    if (data.invoiceNumber) invoiceData.invoiceNumber = data.invoiceNumber;
+    if (data.date) invoiceData.date = data.date;
+    if (data.dueDate) invoiceData.dueDate = data.dueDate;
+    if (data.currency) invoiceData.currency = data.currency;
+    if (data.taxDetail) invoiceData.taxDetail = data.taxDetail;
+    if (data.poNumber) invoiceData.poNumber = data.poNumber;
+    if (data.notes) invoiceData.notes = data.notes;
+    if (data.logo) invoiceData.logo = data.logo;
+    if (data.sender) Object.assign(invoiceData.sender, data.sender);
+    if (data.recipient) Object.assign(invoiceData.recipient, data.recipient);
+    if (data.lineItems && data.lineItems.length > 0) {
+        invoiceData.lineItems = data.lineItems;
+    }
+    if (typeof data.discount === "number") invoiceData.discount = data.discount;
+    if (data.discountType) invoiceData.discountType = data.discountType;
+    if (data.template) invoiceData.template = data.template;
+    if (data.status) invoiceData.status = data.status;
+    if (data.paymentDetails) invoiceData.paymentDetails = data.paymentDetails;
+    return true;
 }
 
 // Template configurations
@@ -956,7 +977,7 @@ function init() {
     if (clearBtn) clearBtn.addEventListener('click', function() {
         showConfirmDialog('Clear all fields and start over? This cannot be undone.', 'Clear All', 'Cancel').then(function(confirmed) {
             if (confirmed) {
-                deleteInvoice('current').then(function() {
+                setMeta('last_edited_invoice', '').then(function() {
                     location.reload();
                 });
             }
@@ -2450,7 +2471,7 @@ function migrateFromLocalStorage() {
             var current = JSON.parse(hasOldData);
             if (current && current.invoiceNumber) {
                 putInvoice(current);
-                putInvoice(Object.assign({}, current, { invoiceNumber: 'current' }));
+                setMeta('last_edited_invoice', current.invoiceNumber);
             }
         } catch (e) {}
 
