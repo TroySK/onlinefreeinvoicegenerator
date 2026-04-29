@@ -1509,6 +1509,13 @@ function updateSidebarListAsync() {
         });
 
         sidebarList.innerHTML = html;
+        if (calActiveDate) {
+            var parts = calActiveDate.split('-');
+            var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            var display = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            document.getElementById('sidebar-search').value = 'Date: ' + display;
+            filterSidebarList(calActiveDate, true);
+        }
     }).catch(function() {});
 }
 
