@@ -1596,22 +1596,6 @@ function updateDbHistory(mutator) {
     });
 }
 
-function filterSidebarList(query) {
-    var items = document.querySelectorAll('.sidebar-item');
-    query = query.toLowerCase();
-
-    items.forEach(function(item) {
-        var title = item.querySelector('.sidebar-item-title').textContent.toLowerCase();
-        var meta = item.querySelector('.sidebar-item-meta').textContent.toLowerCase();
-        
-        if (title.includes(query) || meta.includes(query)) {
-            item.style.display = 'flex';
-        } else {
-            item.style.display = 'none';
-        }
-    });
-}
-
 // Validate a field
 function validateField(section, field, value) {
     let isValid = true;
