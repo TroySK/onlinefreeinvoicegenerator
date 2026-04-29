@@ -200,6 +200,7 @@ function getNextInvoiceNumber() {
 }
 
 function saveInvoiceData() {
+    var isActuallyDirty = isDirty;
     markClean();
     var invoiceNumber = invoiceData.invoiceNumber || 'current';
     var data = {
@@ -224,9 +225,12 @@ function saveInvoiceData() {
         subtotal: invoiceData.subtotal,
         totalTax: invoiceData.totalTax,
         grandTotal: invoiceData.grandTotal,
-        savedAt: Date.now()
+        savedAt: isActuallyDirty ? Date.now() : (invoiceData._savedAt || Date.now())
     };
-return putInvoice(data).then(function() {
+    return putInvoice(data).then(function() {
+        if (isActuallyDirty) {
+            invoiceData._savedAt = data.savedAt;
+        }
         return setMeta('last_edited_invoice', invoiceNumber);
     }).then(function() {
         return putMetaHistoryEntry(data);
@@ -444,6 +448,7 @@ function applyLoadedData(data) {
     if (data.template) invoiceData.template = data.template;
     if (data.status) invoiceData.status = data.status;
     if (data.paymentDetails) invoiceData.paymentDetails = data.paymentDetails;
+    if (data.savedAt) invoiceData._savedAt = data.savedAt;
     return true;
 }
 
