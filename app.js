@@ -1288,22 +1288,11 @@ function filterSidebarList(query, isDateFilter) {
     query = query.toLowerCase();
 
     items.forEach(function(item) {
-        if (isDateFilter) {
-            // Match by date in meta text
-            var meta = item.querySelector('.sidebar-item-meta').textContent.toLowerCase();
-            if (meta.indexOf(query) !== -1) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-            }
+        var allText = item.textContent.toLowerCase();
+        if (allText.indexOf(query) !== -1) {
+            item.style.display = 'flex';
         } else {
-            var title = item.querySelector('.sidebar-item-title').textContent.toLowerCase();
-            var meta = item.querySelector('.sidebar-item-meta').textContent.toLowerCase();
-            if (title.indexOf(query) !== -1 || meta.indexOf(query) !== -1) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-            }
+            item.style.display = 'none';
         }
     });
 
