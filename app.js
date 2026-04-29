@@ -259,7 +259,9 @@ function putMetaHistoryEntry(data) {
             date: data.date,
             savedAt: data.savedAt,
             grandTotal: data.grandTotal || 0,
-            currency: data.currency
+            currency: data.currency,
+            clientName: (data.recipient && data.recipient.name) || '',
+            senderName: (data.sender && data.sender.name) || ''
         };
         if (existingIndex >= 0) {
             history[existingIndex] = entry;
@@ -1480,6 +1482,7 @@ function updateSidebarListAsync() {
             var dateStr = savedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             var amount = item.grandTotal ? getCurrencyDisplay(item.currency || 'USD') + item.grandTotal.toFixed(2) : '';
             var isActive = item.invoiceNumber === currentInvoice;
+            var clientLabel = item.clientName ? '<span class="sidebar-item-client">' + item.clientName + '</span>' : '';
             
             html += '<div class="sidebar-item' + (isActive ? ' active' : '') + '" data-invoice="' + item.invoiceNumber + '" onclick="loadFromHistorySidebar(\'' + item.invoiceNumber + '\')">' +
                 '<div class="sidebar-item-icon">' +
@@ -1490,7 +1493,7 @@ function updateSidebarListAsync() {
                 '</div>' +
                 '<div class="sidebar-item-content">' +
                 '<div class="sidebar-item-title">' + item.invoiceNumber + (isActive ? ' <span class="sidebar-open-badge">Open</span>' : '') + '</div>' +
-                '<div class="sidebar-item-meta">' +
+                '<div class="sidebar-item-meta">' + clientLabel +
                 '<span>' + (item.date || dateStr) + '</span>';
             
             if (amount) {
