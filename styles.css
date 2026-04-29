@@ -242,6 +242,19 @@ body {
     background: var(--primary-light);
 }
 
+.sidebar-open-badge {
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: rgba(99, 102, 241, 0.1);
+    padding: 1px 6px;
+    border-radius: 10px;
+    margin-left: 6px;
+    vertical-align: middle;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 .sidebar-item-icon {
     width: 36px;
     height: 48px;

@@ -1189,8 +1189,9 @@ function init() {
         // Initialize history dropdown
         updateHistoryDropdown();
 
-        // Initialize sidebar
+        // Initialize sidebar and populate list with active state
         initSidebar();
+        updateSidebarListAsync();
 
         // Add event listeners to the first row
         attachRowListeners(lineItemsTable.rows[0], 0);
@@ -1340,16 +1341,17 @@ function updateSidebarListAsync() {
             return;
         }
 
-        history.sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); });
-        history.reverse();
+        history.sort(function(a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
 
         var html = '';
+        var currentInvoice = invoiceData.invoiceNumber || '';
         history.forEach(function(item) {
             var savedDate = item.savedAt ? new Date(item.savedAt) : new Date();
             var dateStr = savedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             var amount = item.grandTotal ? getCurrencyDisplay(item.currency || 'USD') + item.grandTotal.toFixed(2) : '';
+            var isActive = item.invoiceNumber === currentInvoice;
             
-            html += '<div class="sidebar-item" data-invoice="' + item.invoiceNumber + '" onclick="loadFromHistorySidebar(\'' + item.invoiceNumber + '\')">' +
+            html += '<div class="sidebar-item' + (isActive ? ' active' : '') + '" data-invoice="' + item.invoiceNumber + '" onclick="loadFromHistorySidebar(\'' + item.invoiceNumber + '\')">' +
                 '<div class="sidebar-item-icon">' +
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
                 '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>' +
@@ -1357,7 +1359,7 @@ function updateSidebarListAsync() {
                 '</svg>' +
                 '</div>' +
                 '<div class="sidebar-item-content">' +
-                '<div class="sidebar-item-title">' + item.invoiceNumber + '</div>' +
+                '<div class="sidebar-item-title">' + item.invoiceNumber + (isActive ? ' <span class="sidebar-open-badge">Open</span>' : '') + '</div>' +
                 '<div class="sidebar-item-meta">' +
                 '<span>' + (item.date || dateStr) + '</span>';
             
