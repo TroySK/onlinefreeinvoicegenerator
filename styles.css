@@ -181,7 +181,7 @@ body {
 /* Sidebar Calendar */
 .sidebar-calendar {
     padding: 12px 12px 8px;
-    border-bottom: 1px solid var(--border);
+    border-top: 1px solid var(--border);
     background: var(--bg-subtle);
 }
 
@@ -262,6 +262,21 @@ body {
     background: var(--primary);
     border-radius: 50%;
     margin: 1px auto 0;
+}
+
+.cal-has-invoices.cal-active {
+    background: var(--primary);
+    color: white;
+    font-weight: 700;
+}
+
+.cal-has-invoices.cal-active::after {
+    background: white;
+}
+
+.cal-has-invoices:hover {
+    background: var(--primary-light);
+    cursor: pointer;
 }
 
 .cal-count {

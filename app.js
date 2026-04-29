@@ -1214,6 +1214,8 @@ function init() {
 }
 
 // Calendar
+var calActiveDate = '';
+
 function renderCalendar(month) {
     var grid = document.getElementById('cal-grid');
     var label = document.getElementById('cal-month-label');
@@ -1225,7 +1227,6 @@ function renderCalendar(month) {
     label.textContent = months[m] + ' ' + year;
 
     getHistory().then(function(history) {
-        // Build map: date string -> count
         var dateMap = {};
         history.forEach(function(item) {
             if (item.date) {
@@ -1251,13 +1252,73 @@ function renderCalendar(month) {
             var cls = 'cal-day';
             if (isToday) cls += ' cal-today';
             if (count > 0) cls += ' cal-has-invoices';
-            html += '<div class="' + cls + '" title="' + count + ' invoice' + (count !== 1 ? 's' : '') + '">' + d;
+            if (dateStr === calActiveDate) cls += ' cal-active';
+            var clickable = count > 0 ? ' onclick="filterByDate(\'' + dateStr + '\')" tabindex="0" role="button" aria-label="' + count + ' invoice' + (count !== 1 ? 's' : '') + '"' : '';
+            html += '<div class="' + cls + '"' + clickable + ' data-date="' + dateStr + '">' + d;
             if (count > 1) html += '<span class="cal-count">' + count + '</span>';
             html += '</div>';
         }
 
         grid.innerHTML = html;
     });
+}
+
+function filterByDate(dateStr) {
+    if (calActiveDate === dateStr) {
+        // Toggle off
+        calActiveDate = '';
+        document.getElementById('sidebar-search').value = '';
+        filterSidebarList('');
+    } else {
+        calActiveDate = dateStr;
+        // Format for display: "Apr 27, 2026"
+        var parts = dateStr.split('-');
+        var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        var display = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        document.getElementById('sidebar-search').value = 'Date: ' + display;
+        filterSidebarList(dateStr, true);
+    }
+    renderCalendar(calCurrentMonth);
+}
+
+function filterSidebarList(query, isDateFilter) {
+    var items = document.querySelectorAll('.sidebar-item');
+    query = query.toLowerCase();
+
+    items.forEach(function(item) {
+        if (isDateFilter) {
+            // Match by date in meta text
+            var meta = item.querySelector('.sidebar-item-meta').textContent.toLowerCase();
+            if (meta.indexOf(query) !== -1) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        } else {
+            var title = item.querySelector('.sidebar-item-title').textContent.toLowerCase();
+            var meta = item.querySelector('.sidebar-item-meta').textContent.toLowerCase();
+            if (title.indexOf(query) !== -1 || meta.indexOf(query) !== -1) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
+
+    // Show/hide empty state
+    var list = document.getElementById('sidebar-list');
+    var emptyMsg = list.querySelector('.sidebar-empty');
+    var visibleCount = list.querySelectorAll('.sidebar-item[style*="flex"]').length;
+    if (visibleCount === 0 && items.length > 0) {
+        if (!emptyMsg) {
+            var msg = document.createElement('div');
+            msg.className = 'sidebar-empty';
+            msg.innerHTML = '<p>No matching invoices</p>';
+            list.appendChild(msg);
+        }
+    } else if (emptyMsg && (visibleCount > 0 || items.length === 0)) {
+        emptyMsg.remove();
+    }
 }
 
 function initCalendar() {

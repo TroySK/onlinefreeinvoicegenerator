@@ -81,6 +81,9 @@
         <div class="sidebar-search">
             <input type="text" id="sidebar-search" placeholder="Search invoices..." aria-label="Search invoices">
         </div>
+        <div class="sidebar-list" id="sidebar-list">
+            <!-- Invoice items will be populated by JavaScript -->
+        </div>
         <div class="sidebar-calendar" id="sidebar-calendar">
             <div class="sidebar-calendar-header">
                 <button class="sidebar-calendar-nav" id="cal-prev" aria-label="Previous month">
@@ -92,9 +95,6 @@
                 </button>
             </div>
             <div class="sidebar-calendar-grid" id="cal-grid"></div>
-        </div>
-        <div class="sidebar-list" id="sidebar-list">
-            <!-- Invoice items will be populated by JavaScript -->
         </div>
         <div class="sidebar-footer">
             <button type="button" id="export-btn" class="sidebar-action-btn" title="Export all invoices as JSON">
