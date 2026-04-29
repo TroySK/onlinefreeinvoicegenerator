@@ -135,6 +135,9 @@ let currentLang = 'en';
 let isDirty = false;
 
 // Track unsaved changes for beforeunload warning
+var calCurrentMonth = new Date();
+calCurrentMonth.setDate(1);
+
 function markDirty() {
     isDirty = true;
 }
@@ -1210,6 +1213,65 @@ function init() {
     });
 }
 
+// Calendar
+function renderCalendar(month) {
+    var grid = document.getElementById('cal-grid');
+    var label = document.getElementById('cal-month-label');
+    if (!grid || !label) return;
+
+    var year = month.getFullYear();
+    var m = month.getMonth();
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    label.textContent = months[m] + ' ' + year;
+
+    getHistory().then(function(history) {
+        // Build map: date string -> count
+        var dateMap = {};
+        history.forEach(function(item) {
+            if (item.date) {
+                dateMap[item.date] = (dateMap[item.date] || 0) + 1;
+            }
+        });
+
+        var firstDay = new Date(year, m, 1).getDay();
+        var daysInMonth = new Date(year, m + 1, 0).getDate();
+        var today = new Date();
+        var todayStr = today.toISOString().split('T')[0];
+
+        var html = '<div class="cal-day cal-day-header">Su</div><div class="cal-day cal-day-header">Mo</div><div class="cal-day cal-day-header">Tu</div><div class="cal-day cal-day-header">We</div><div class="cal-day cal-day-header">Th</div><div class="cal-day cal-day-header">Fr</div><div class="cal-day cal-day-header">Sa</div>';
+
+        for (var i = 0; i < firstDay; i++) {
+            html += '<div class="cal-day cal-day-empty"></div>';
+        }
+
+        for (var d = 1; d <= daysInMonth; d++) {
+            var dateStr = year + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            var count = dateMap[dateStr] || 0;
+            var isToday = dateStr === todayStr;
+            var cls = 'cal-day';
+            if (isToday) cls += ' cal-today';
+            if (count > 0) cls += ' cal-has-invoices';
+            html += '<div class="' + cls + '" title="' + count + ' invoice' + (count !== 1 ? 's' : '') + '">' + d;
+            if (count > 1) html += '<span class="cal-count">' + count + '</span>';
+            html += '</div>';
+        }
+
+        grid.innerHTML = html;
+    });
+}
+
+function initCalendar() {
+    renderCalendar(calCurrentMonth);
+    document.getElementById('cal-prev').addEventListener('click', function() {
+        calCurrentMonth.setMonth(calCurrentMonth.getMonth() - 1);
+        renderCalendar(calCurrentMonth);
+    });
+    document.getElementById('cal-next').addEventListener('click', function() {
+        calCurrentMonth.setMonth(calCurrentMonth.getMonth() + 1);
+        renderCalendar(calCurrentMonth);
+    });
+}
+
 function initSidebar() {
     var sidebar = document.getElementById('sidebar');
     var hamburgerToggle = document.getElementById('hamburger-toggle');
@@ -1265,13 +1327,14 @@ function initSidebar() {
         });
     }
 
-    // Search functionality
+// Search functionality
     if (sidebarSearch) {
         sidebarSearch.addEventListener('input', function() {
             filterSidebarList(this.value);
         });
     }
 
+    initCalendar();
 }
 
 function toggleSidebar(sidebar, toggleBtn, mainWrapper) {
@@ -1333,6 +1396,7 @@ function updateSidebarListAsync() {
     if (!sidebarList) return Promise.resolve();
 
     return getHistory().then(function(history) {
+        renderCalendar(calCurrentMonth);
         if (history.length === 0) {
             sidebarList.innerHTML = '<div class="sidebar-empty">' +
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
