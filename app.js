@@ -996,46 +996,55 @@ function init() {
 
     if (duplicateBtn) duplicateBtn.addEventListener('click', function() {
         var today = new Date().toISOString().split('T')[0];
-        getNextInvoiceNumber().then(function(num) {
-            invoiceData.invoiceNumber = num;
-            invoiceData.date = today;
-            invoiceData.dueDate = '';
-            invoiceData.poNumber = '';
-            invoiceData.notes = '';
-            invoiceData.recipient = { name: '', address: '', email: '' };
-            invoiceData.lineItems = [
-                {
-                    description: "",
-                    quantity: 0,
-                    rate: 0.0,
-                    tax: 0.0,
-                    amount: 0.0,
-                    taxAmount: 0.0
-                }
-            ];
-            invoiceData.subtotal = 0;
-            invoiceData.totalTax = 0;
-            invoiceData.discount = 0;
-            invoiceData.grandTotal = 0;
-            invoiceData.status = '';
+        var currentNum = invoiceData.invoiceNumber || '';
+        var match = currentNum.match(/^(.*?)(\d+)$/);
+        var nextNum;
+        if (match) {
+            var prefix = match[1];
+            var numPart = parseInt(match[2], 10) + 1;
+            var padded = String(numPart).padStart(match[2].length, '0');
+            nextNum = prefix + padded;
+        } else {
+            nextNum = currentNum + '-1';
+        }
+        invoiceData.invoiceNumber = nextNum;
+        invoiceData.date = today;
+        invoiceData.dueDate = '';
+        invoiceData.poNumber = '';
+        invoiceData.notes = '';
+        invoiceData.recipient = { name: '', address: '', email: '' };
+        invoiceData.lineItems = [
+            {
+                description: "",
+                quantity: 0,
+                rate: 0.0,
+                tax: 0.0,
+                amount: 0.0,
+                taxAmount: 0.0
+            }
+        ];
+        invoiceData.subtotal = 0;
+        invoiceData.totalTax = 0;
+        invoiceData.discount = 0;
+        invoiceData.grandTotal = 0;
+        invoiceData.status = '';
 
-            syncToDOM();
-            calculateTotals();
+        syncToDOM();
+        calculateTotals();
 
-            ['recipient-name', 'recipient-email', 'invoice-number'].forEach(function(id) {
-                var el = document.getElementById(id);
-                el.classList.remove('invalid');
-                el.removeAttribute('aria-describedby');
-                el.removeAttribute('aria-invalid');
-            });
-            ['recipient-name-error', 'recipient-email-error', 'invoice-number-error'].forEach(function(id) {
-                var el = document.getElementById(id);
-                if (el) el.textContent = '';
-            });
-
-            saveInvoiceData();
-            showToast('Invoice duplicated. Update recipient and download.', 'success');
+        ['recipient-name', 'recipient-email', 'invoice-number'].forEach(function(id) {
+            var el = document.getElementById(id);
+            el.classList.remove('invalid');
+            el.removeAttribute('aria-describedby');
+            el.removeAttribute('aria-invalid');
         });
+        ['recipient-name-error', 'recipient-email-error', 'invoice-number-error'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = '';
+        });
+
+        saveInvoiceData();
+        showToast('Invoice duplicated. Update recipient and download.', 'success');
     });
 
     if (saveBtn) saveBtn.addEventListener('click', function() {
