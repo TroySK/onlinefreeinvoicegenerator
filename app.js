@@ -261,7 +261,8 @@ function putMetaHistoryEntry(data) {
             grandTotal: data.grandTotal || 0,
             currency: data.currency,
             clientName: (data.recipient && data.recipient.name) || '',
-            senderName: (data.sender && data.sender.name) || ''
+            senderName: (data.sender && data.sender.name) || '',
+            clientEmail: (data.recipient && data.recipient.email) || ''
         };
         if (existingIndex >= 0) {
             history[existingIndex] = entry;
@@ -1462,6 +1463,7 @@ function updateSidebarListAsync() {
             var amount = item.grandTotal ? getCurrencyDisplay(item.currency || 'USD') + item.grandTotal.toFixed(2) : '';
             var isActive = item.invoiceNumber === currentInvoice;
             var clientLabel = item.clientName ? '<span class="sidebar-item-client">' + item.clientName + '</span>' : '';
+            var emailHidden = item.clientEmail ? '<span class="sidebar-item-email" aria-hidden="true">' + item.clientEmail + '</span>' : '';
             
             html += '<div class="sidebar-item' + (isActive ? ' active' : '') + '" data-invoice="' + item.invoiceNumber + '" onclick="loadFromHistorySidebar(\'' + item.invoiceNumber + '\')">' +
                 '<div class="sidebar-item-icon">' +
@@ -1471,7 +1473,7 @@ function updateSidebarListAsync() {
                 '</svg>' +
                 '</div>' +
                 '<div class="sidebar-item-content">' +
-                '<div class="sidebar-item-title">' + item.invoiceNumber + (isActive ? ' <span class="sidebar-open-badge">Open</span>' : '') + '</div>' +
+                '<div class="sidebar-item-title">' + item.invoiceNumber + (isActive ? ' <span class="sidebar-open-badge">Open</span>' : '') + emailHidden + '</div>' +
                 '<div class="sidebar-item-meta">' + clientLabel +
                 '<span>' + (item.date || dateStr) + '</span>';
             

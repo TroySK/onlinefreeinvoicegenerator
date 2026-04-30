@@ -373,6 +373,14 @@ body {
     letter-spacing: 0.05em;
 }
 
+.sidebar-item-email {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
 .sidebar-item-icon {
     width: 36px;
     height: 48px;

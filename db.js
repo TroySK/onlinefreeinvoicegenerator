@@ -124,7 +124,8 @@ function getHistory() {
                 grandTotal: inv.grandTotal || 0,
                 currency: inv.currency,
                 clientName: (inv.recipient && inv.recipient.name) || '',
-                senderName: (inv.sender && inv.sender.name) || ''
+                senderName: (inv.sender && inv.sender.name) || '',
+                clientEmail: (inv.recipient && inv.recipient.email) || ''
             };
         }).sort(function(a, b) {
             return (b.savedAt || 0) - (a.savedAt || 0);
