@@ -1009,25 +1009,6 @@ function init() {
         }
         invoiceData.invoiceNumber = nextNum;
         invoiceData.date = today;
-        invoiceData.dueDate = '';
-        invoiceData.poNumber = '';
-        invoiceData.notes = '';
-        invoiceData.recipient = { name: '', address: '', email: '' };
-        invoiceData.lineItems = [
-            {
-                description: "",
-                quantity: 0,
-                rate: 0.0,
-                tax: 0.0,
-                amount: 0.0,
-                taxAmount: 0.0
-            }
-        ];
-        invoiceData.subtotal = 0;
-        invoiceData.totalTax = 0;
-        invoiceData.discount = 0;
-        invoiceData.grandTotal = 0;
-        invoiceData.status = '';
 
         syncToDOM();
         calculateTotals();
@@ -2159,13 +2140,14 @@ function updateCurrencyDisplay() {
 
 // Load sample invoice data
 function loadSampleInvoice() {
+    getNextInvoiceNumber().then(function(num) {
     invoiceData.sender.name = 'Acme Corporation';
     invoiceData.sender.address = '123 Business Ave, Suite 100\nSan Francisco, CA 94105';
     invoiceData.sender.email = 'billing@acmecorp.com';
     invoiceData.recipient.name = 'TechStart Inc.';
     invoiceData.recipient.address = '456 Innovation Drive\nNew York, NY 10001';
     invoiceData.recipient.email = 'accounts@techstart.io';
-    invoiceData.invoiceNumber = getNextInvoiceNumber();
+    invoiceData.invoiceNumber = num;
     invoiceData.date = new Date().toISOString().split('T')[0];
     var dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 30);
@@ -2189,6 +2171,7 @@ function loadSampleInvoice() {
     calculateTotals();
     saveInvoiceData();
     showToast('Sample invoice loaded', 'success');
+    });
 }
 
 // Custom confirm dialog (non-blocking)
