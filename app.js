@@ -1562,6 +1562,29 @@ function deleteFromHistory(invoiceNumber) {
                         return history.filter(function(h) { return h.invoiceNumber !== invoiceNumber; });
                     });
                 }).then(function() {
+                    // If the currently open invoice was deleted, reset to a fresh invoice
+                    if (invoiceData.invoiceNumber === invoiceNumber) {
+                        return setMeta('last_edited_invoice', '').then(function() {
+                            invoiceData.invoiceNumber = '';
+                            invoiceData.sender = { name: '', address: '', email: '' };
+                            invoiceData.recipient = { name: '', address: '', email: '' };
+                            invoiceData.lineItems = [{ description: "", quantity: 0, rate: 0.0, tax: 0.0, amount: 0.0, taxAmount: 0.0 }];
+                            invoiceData.subtotal = 0;
+                            invoiceData.totalTax = 0;
+                            invoiceData.discount = 0;
+                            invoiceData.grandTotal = 0;
+                            invoiceData.date = new Date().toISOString().split('T')[0];
+                            invoiceData.notes = '';
+                            invoiceData.poNumber = '';
+                            invoiceData.status = '';
+                            return getNextInvoiceNumber().then(function(num) {
+                                invoiceData.invoiceNumber = num;
+                                syncToDOM();
+                                calculateTotals();
+                            });
+                        });
+                    }
+                }).then(function() {
                     return updateSidebarListAsync();
                 }).then(function() {
                     showToast('Invoice deleted', 'success', 'Undo', function() {
