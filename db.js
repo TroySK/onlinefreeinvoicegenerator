@@ -122,7 +122,9 @@ function getHistory() {
                 date: inv.date,
                 savedAt: inv.savedAt || 0,
                 grandTotal: inv.grandTotal || 0,
-                currency: inv.currency
+                currency: inv.currency,
+                clientName: (inv.recipient && inv.recipient.name) || '',
+                senderName: (inv.sender && inv.sender.name) || ''
             };
         }).sort(function(a, b) {
             return (b.savedAt || 0) - (a.savedAt || 0);
