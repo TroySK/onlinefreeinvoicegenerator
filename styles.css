@@ -926,6 +926,14 @@ body {
     background: linear-gradient(135deg, #2563eb, #3b82f6);
 }
 
+.template-elegant .template-icon {
+    background: linear-gradient(135deg, #be123c, #e11d48);
+}
+
+.template-nature .template-icon {
+    background: linear-gradient(135deg, #047857, #10b981);
+}
+
 .template-option span {
     font-size: 0.875rem;
     font-weight: 600;
@@ -2248,6 +2256,132 @@ td.tax-cell {
 [data-theme="dark"] .template-business .add-item-btn:hover {
     background: #1e3a5f;
     border-color: #60a5fa;
+}
+
+/* Elegant: rose/red tones, soft rounded look */
+.template-elegant {
+    font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+.template-elegant .invoice-card {
+    border: 1px solid #fecdd3;
+    border-top: 3px solid #be123c;
+    box-shadow: 0 4px 16px rgba(190, 18, 60, 0.1);
+    border-radius: 12px;
+}
+
+.template-elegant .line-items th {
+    background: #be123c;
+    color: #ffffff;
+    border-bottom: 2px solid #9f1239;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.template-elegant .line-items td {
+    border-bottom: 1px solid #fecdd3;
+}
+
+[data-theme="dark"] .template-elegant .line-items td {
+    border-bottom: 1px solid #3b0d1a;
+}
+
+.template-elegant .card-section-title {
+    color: #be123c;
+    font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+.template-elegant .totals {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 8px;
+}
+
+[data-theme="dark"] .template-elegant .totals {
+    background: #2d0a16;
+    border-color: #be123c;
+}
+
+.template-elegant .add-item-btn {
+    color: #be123c;
+    border-color: #fda4af;
+}
+
+[data-theme="dark"] .template-elegant .add-item-btn {
+    color: #fda4af;
+    border-color: #be123c;
+}
+
+.template-elegant .add-item-btn:hover {
+    background: #ffe4e6;
+    border-color: #be123c;
+}
+
+[data-theme="dark"] .template-elegant .add-item-btn:hover {
+    background: #3b0d1a;
+    border-color: #fb7185;
+}
+
+/* Nature: green tones, clean organic feel */
+.template-nature {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.template-nature .invoice-card {
+    border: none;
+    border-left: 4px solid #047857;
+    box-shadow: 0 4px 12px rgba(4, 120, 87, 0.15);
+    border-radius: 8px;
+}
+
+.template-nature .line-items th {
+    background: #047857;
+    color: #ffffff;
+    border-bottom: 2px solid #065f46;
+    font-weight: 700;
+}
+
+.template-nature .line-items td {
+    border-bottom: 1px solid #d1fae5;
+}
+
+[data-theme="dark"] .template-nature .line-items td {
+    border-bottom: 1px solid #064e3b;
+}
+
+.template-nature .card-section-title {
+    color: #047857;
+}
+
+.template-nature .totals {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 6px;
+}
+
+[data-theme="dark"] .template-nature .totals {
+    background: #064e3b;
+    border-color: #047857;
+}
+
+.template-nature .add-item-btn {
+    color: #047857;
+    border-color: #6ee7b7;
+}
+
+[data-theme="dark"] .template-nature .add-item-btn {
+    color: #6ee7b7;
+    border-color: #047857;
+}
+
+.template-nature .add-item-btn:hover {
+    background: #d1fae5;
+    border-color: #047857;
+}
+
+[data-theme="dark"] .template-nature .add-item-btn:hover {
+    background: #065f46;
+    border-color: #34d399;
 }
 
 /* Responsive */
